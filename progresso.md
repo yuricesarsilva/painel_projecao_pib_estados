@@ -54,9 +54,33 @@
 
 ---
 
+---
+
+## Etapa 3 — Verificação de consistência contábil (`R/02_consistencia.R`)
+
+**O que foi feito:**
+- Criado script que verifica 4 identidades contábeis nos dados históricos (2002–2023).
+- Resultados salvos em `dados/consistencia.rds`.
+
+**Resultados:**
+
+| Checagem | Desvio máximo | Resultado |
+|----------|--------------|-----------|
+| PIB = VAB + Impostos | ~0,000002% | ✅ Satisfeita (arredondamento numérico) |
+| Soma dos estados = PIB da região | ~10⁻¹³% | ✅ Satisfeita (ponto flutuante) |
+| Soma das regiões = PIB Brasil | ~10⁻¹³% | ✅ Satisfeita (ponto flutuante) |
+| Soma das atividades = VAB total | -64% em Acre 2002 | ⚠️ Único caso — NAs já conhecidos do IBGE |
+
+**Nota:** O desvio de Acre 2002 é causado pelos 10 NAs em `val_corrente` identificados na Etapa 1. A soma das atividades fica incompleta, mas o total do IBGE está correto. Não é erro do pipeline.
+
+**Arquivos criados:** `R/02_consistencia.R`
+
+---
+
 ## Próximas etapas
 
-- [ ] `R/02_consistencia.R` — verificar identidades contábeis nos dados históricos
+- [x] `R/01_leitura_dados.R` — leitura e estruturação dos dados brutos
+- [x] `R/02_consistencia.R` — verificar identidades contábeis nos dados históricos
 - [ ] `R/03_projecao.R` — modelos de projeção por variável e setor
 - [ ] `R/04_reconciliacao.R` — garantir restrições de agregação nas projeções
 - [ ] `R/05_output.R` — gerar tabelas e gráficos de resultado
