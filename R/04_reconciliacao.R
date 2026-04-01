@@ -38,9 +38,9 @@ pib_2023 <- esp |>
   select(geo, pib_2023 = valor)
 
 # Separar os três níveis geográficos
-br   <- proj |> filter(geo_tipo == "Brasil")
+br   <- proj |> filter(geo_tipo == "brasil")
 regs <- proj |> filter(geo_tipo == "regiao")
-ufs  <- proj |> filter(geo_tipo == "UF")
+ufs  <- proj |> filter(geo_tipo == "estado")
 
 message("Séries carregadas: Brasil=", nrow(br) / length(unique(proj$ano)),
         " reg=", nrow(regs) / length(unique(proj$ano)),
