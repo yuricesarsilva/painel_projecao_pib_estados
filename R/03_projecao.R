@@ -362,14 +362,14 @@ imp_2023 <- impostos_df |>
   filter(ano == ANO_FIM) |>
   select(geo, imp_2023 = valor)
 
-# Índices projetados por macrossetor
+# Índices projetados por macrossetor (excluir séries de atividade)
 proj_vol <- projecoes_brutas |>
-  filter(variavel == "idx_volume") |>
+  filter(variavel == "idx_volume", is.na(atividade)) |>
   select(geo, macrossetor, ano, idx_volume = proj,
          idx_vol_lo95 = lo95, idx_vol_hi95 = hi95)
 
 proj_prc <- projecoes_brutas |>
-  filter(variavel == "idx_preco") |>
+  filter(variavel == "idx_preco", is.na(atividade)) |>
   select(geo, macrossetor, ano, idx_preco = proj,
          idx_prc_lo95 = lo95, idx_prc_hi95 = hi95)
 
