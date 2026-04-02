@@ -29,8 +29,7 @@ jobs:
 
       # Renderizar o painel (CSVs já estão em painel/data/ versionados no repo)
       - name: Renderizar painel Quarto
-        run: quarto render painel/painel.qmd --output-dir _site
-        working-directory: ${{ github.workspace }}/painel
+        run: quarto render painel/painel.qmd --output-dir painel/_site
 
       # Publicar na branch gh-pages
       - name: Publicar no GitHub Pages
