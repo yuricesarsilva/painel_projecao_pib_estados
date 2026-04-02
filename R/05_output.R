@@ -12,26 +12,63 @@ library(RColorBrewer)
 # 05_output.R
 #
 # Gera tabelas Excel e gráficos a partir das projeções reconciliadas.
-# Outputs COMPLETOS: todos os 33 territórios, todas as séries, com IC 95%.
+# Cobre todos os 33 territórios, todas as séries, com IC 95%.
 #
-# Entradas:  dados/especiais.rds
-#            dados/projecoes_reconciliadas.rds
-#            dados/vab_macro_reconciliado.rds      (tem colunas CI dos índices)
-#            dados/projecoes_brutas.rds             (para CI de log_impostos)
-#            dados/vab_macro_hist.rds               (série histórica por macro)
-#            dados/vab_atividade_hist.rds           (série histórica por atividade)
-#            dados/vab_atividade_reconciliada.rds   (projetado+CI por atividade)
-#            dados/params_modelos.rds               (seleção de modelos)
+# Entradas:
+#   dados/especiais.rds                  — histórico PIB/VAB/impostos/volume
+#   dados/projecoes_reconciliadas.rds    — PIB, VAB, impostos, deflator, cresc.
+#                                          real, fator_ajuste por geo × ano
+#   dados/vab_macro_reconciliado.rds     — VAB por macrossetor reconciliado;
+#                                          contém colunas CI dos índices
+#                                          (idx_vol_lo95/hi95, idx_prc_lo95/hi95,
+#                                          vab_2023, fator_acum) herdadas de
+#                                          vab_macrossetor_proj.rds
+#   dados/projecoes_brutas.rds           — séries brutas projetadas com IC;
+#                                          usado para CI de log_impostos e
+#                                          para os gráficos de séries brutas
+#   dados/vab_macro_hist.rds             — série histórica VAB por macrossetor
+#                                          (val_corrente, idx_volume, idx_preco)
+#   dados/vab_atividade_hist.rds         — série histórica VAB por atividade
+#   dados/vab_atividade_reconciliada.rds — VAB por atividade projetado + IC 95%
+#                                          reconciliado (opcional)
+#   dados/params_modelos.rds             — modelo selecionado, parâmetros,
+#                                          MASE e RMSE por série (opcional)
+#
+# Intervalos de confiança (IC 95%) calculados para:
+#   VAB macrossetor : propaga CI dos índices → aplica fator de reconciliação
+#   VAB atividade   : herdado de vab_atividade_reconciliada (já com fator)
+#   VAB total       : soma dos IC dos macrossetores
+#   Impostos        : exp(lo95/hi95 de log_impostos) × fator_ajuste
+#   PIB nominal     : vab_ci + impostos_ci
+#   Crescimento real: média ponderada dos idx_vol_lo95/hi95 (pesos = VAB 2023)
 #
 # Saídas:
 #   output/tabelas/projecoes_pib_estadual.xlsx
 #     Abas: PIB_nominal | VAB_nominal | Impostos_nominais | Cresc_real_PIB |
 #           Deflator_PIB | VAB_macrossetor | VAB_atividade |
 #           Intervalos_Confianca | Selecao_Modelos
-#   output/graficos/todas_geos/        (21 plots: 9 macro/agg + 12 atividades)
-#   output/graficos/por_geo/           (33 plots: todas as variáveis)
-#   output/graficos/por_geo_atividade/ (33 stacked-area plots VAB por atividade)
-#   output/graficos/series_brutas/     (9 plots: séries brutas com CI)
+#     Linha separadora vermelha entre histórico (2002–2023) e projetado
+#     (2024–2031) em todas as abas.
+#   output/graficos/todas_geos/
+#     pib_nominal.png, vab_nominal.png, impostos_nominal.png,
+#     cresc_real_pib.png, deflator_pib.png,
+#     vab_{macrossetor}.png  (4 plots, um por macrossetor),
+#     vab_ativ_{atividade}.png  (12 plots, um por atividade)
+#     Total: 21 plots — todos os 33 territórios facetados, ribbon IC 95%
+#   output/graficos/por_geo/
+#     {geo}.png — 33 plots, 1 por território, com 9+ painéis: PIB, VAB,
+#     impostos, cresc. real, deflator, VAB por 4 macrossetores
+#   output/graficos/por_geo_atividade/
+#     {geo}.png — 33 stacked-area plots: VAB decomposto por 12 atividades,
+#     histórico + projetado
+#   output/graficos/series_brutas/
+#     idx_volume_{macro}.png, idx_preco_{macro}.png  (8 plots),
+#     log_impostos.png  (1 plot)
+#     Total: 9 plots — séries modeladas diretamente com CI 95%
+#   output/graficos/  (5 plots de resumo)
+#     pib_nominal_brasil.png, cresc_real_regioes.png,
+#     pib_nominal_roraima.png, fatores_ajuste.png,
+#     participacao_pib_estados.png
 # ==============================================================================
 
 # ==============================================================================

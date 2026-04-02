@@ -1,6 +1,27 @@
 library(tidyverse)
 
 # ==============================================================================
+# 02_consistencia.R
+#
+# Verifica identidades contábeis nos dados históricos (2002–2023).
+# Não gera projeções; serve como camada de validação da base de dados.
+#
+# Checagens realizadas:
+#   1. PIB = VAB + Impostos          (para cada geo × ano)
+#   2. Soma dos estados = região     (para cada região × ano)
+#   3. Soma das regiões = Brasil     (para cada ano)
+#   4. Soma das atividades = VAB total (Conta da Produção, excluindo "total")
+#   5. Consistência dos impostos: SIDRA vs. imputados (PIB − VAB)
+#
+# Nota: Acre × 2002 apresenta NAs em val_corrente para algumas atividades
+# de serviços — limitação do arquivo IBGE original, não é erro do pipeline.
+# Isso causa desvio de ~−64% na Checagem 4 para esse par geo×ano.
+#
+# Entradas:  dados/especiais.rds, dados/conta_producao.rds
+# Saídas:    dados/consistencia.rds
+# ==============================================================================
+
+# ==============================================================================
 # Carrega dados
 # ==============================================================================
 

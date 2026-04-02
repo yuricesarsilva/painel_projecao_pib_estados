@@ -2,6 +2,39 @@ library(tidyverse)
 library(readxl)
 
 # ==============================================================================
+# 01_leitura_dados.R
+#
+# Lê todas as fontes brutas de dados e salva dois arquivos .rds em dados/.
+#
+# Fontes em base_bruta/:
+#   Especiais_2002_2023_xls/
+#     tab01.xls — PIB nominal (27 UFs + 5 regiões + Brasil, 2002–2023)
+#     tab03.xls — Série encadeada do volume do PIB (índice, base 2010=100)
+#     tab04.xls — VAB nominal total
+#     tab05.xls — Série encadeada do volume do VAB por atividade (13 abas)
+#   Conta_da_Producao_2002_2023_xls/
+#     Tabela1.xls a Tabela33.xls — VBP, CI e VAB por atividade:
+#       val_ano_ant, idx_volume, val_preco_ant, idx_preco, val_corrente
+#       (33 geos × 13 atividades × 3 blocos × 22 anos = 28.314 linhas)
+#   PIB e Impostos (SIDRA).xlsx — impostos líquidos de subsídios nominais
+#     (em R$ mil → convertido para R$ milhões na leitura)
+#     Impostos faltantes (anos mais recentes sem cobertura SIDRA) são
+#     imputados via identidade contábil: Impostos = PIB − VAB
+#
+# Notas:
+#   - Unidade monetária uniforme: R$ milhões.
+#   - Índices de volume e preço começam em 2003 (2002 só tem val_corrente).
+#   - Acre possui NAs em val_corrente no ano 2002 para algumas atividades
+#     (limitação do arquivo original do IBGE — não afeta anos projetados).
+#   - Tabela19.xls (Sudeste) tem nomes de abas não padrão; corrigido pelo
+#     uso de índice posicional de aba em vez de nome.
+#
+# Saídas:
+#   dados/especiais.rds     — PIB, VAB, impostos, vol. encadeado (tidy)
+#   dados/conta_producao.rds — VBP/CI/VAB por atividade × geo × ano (tidy)
+# ==============================================================================
+
+# ==============================================================================
 # Caminhos
 # ==============================================================================
 

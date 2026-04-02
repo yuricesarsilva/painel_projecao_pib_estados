@@ -10,12 +10,31 @@ library(tidyverse)
 #
 # Método: benchmarking proporcional top-down
 #   Brasil (âncora) → regiões ajustadas → estados ajustados dentro de cada região
-#   Os subcomponentes (VAB, impostos) são escalonados pela mesma razão do PIB,
-#   preservando a identidade contábil em todos os níveis.
+#   Os subcomponentes (VAB total e impostos) são escalonados pela mesma razão
+#   do PIB, preservando a identidade contábil PIB = VAB + Impostos em todos
+#   os níveis geográficos.
 #
-# Entradas:  dados/projecoes_derivadas.rds, dados/vab_macrossetor_proj.rds,
+# Parte 6  — Reconciliação VAB por macrossetor:
+#   Dentro de cada geo × ano, escala os macrossetores para que a soma bata
+#   com o VAB total reconciliado (fator proporcional único por geo × ano).
+#
+# Parte 6b — Reconciliação VAB por atividade individual:
+#   Mesma lógica da Parte 6, aplicada às 12 atividades individuais.
+#   O fator é aplicado também a vab_lo95 e vab_hi95, preservando os IC 95%.
+#   Só executa se dados/vab_atividade_proj.rds existir.
+#
+# Parte 4  — Deflator reconciliado:
+#   tx_cresc_pib_real é mantida inalterada (índices encadeados não são
+#   aditivos espacialmente). O deflator é recalculado pós-reconciliação
+#   usando o PIB nominal reconciliado e o índice de volume acumulado.
+#
+# Entradas:  dados/projecoes_derivadas.rds
+#            dados/vab_macrossetor_proj.rds
+#            dados/vab_atividade_proj.rds   (opcional)
 #            dados/especiais.rds
-# Saídas:    dados/projecoes_reconciliadas.rds, dados/vab_macro_reconciliado.rds
+# Saídas:    dados/projecoes_reconciliadas.rds
+#            dados/vab_macro_reconciliado.rds
+#            dados/vab_atividade_reconciliada.rds  (se atividade_proj existir)
 # ==============================================================================
 
 # ==============================================================================

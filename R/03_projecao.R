@@ -11,6 +11,65 @@ for (p in c("prophet")) {
 library(prophet)
 
 # ==============================================================================
+# 03_projecao.R
+#
+# Modela ~1.089 séries temporais e projeta 2024–2031.
+#
+# Séries modeladas (todas anuais, 2002/2003–2023):
+#   A) Macrossetor × geo (264 séries, atividade = NA):
+#        idx_volume e idx_preco de 4 macrossetores × 33 geos
+#        Nota: estes índices são DERIVADOS — calculados pela agregação dos
+#        val_corrente/val_preco_ant das atividades individuais (não lidos
+#        diretamente do IBGE, pois o IBGE não publica índices agregados).
+#   B) Impostos × geo (33 séries, atividade = NA):
+#        log(impostos_nominal) de 33 geos
+#   C) Atividade × geo (~792 séries, atividade preenchida):
+#        idx_volume e idx_preco de 12 atividades × 33 geos
+#        Fonte: lidos DIRETAMENTE de conta_producao.rds (IBGE)
+#        serie_id com prefixo "ativ__" para evitar colisão com macrossetores
+#        (ex.: "Roraima|ativ__agropecuaria|idx_volume")
+#
+# Modelos candidatos (10 por série):
+#   rw, arma, arima, sarima, ets, ets_amort, theta, nnar, prophet, ssm
+#   Seleção por validação cruzada expanding-window, métrica MASE.
+#   Para projeção final: arima/arma sem approximation (mais preciso).
+#
+# Notas sobre modelos:
+#   SARIMA: dados anuais não têm sazonalidade intra-anual; implementado com
+#     period=2 para capturar ciclos bienais — auto.arima descarta se não
+#     significativo.
+#   SSM: StructTS local linear trend (filtro de Kalman via MLE), substitui
+#     BSTS (indisponível para R 4.4.2).
+#
+# Cache: se dados/selecao_modelos.rds existir, o CV é pulado.
+#   IMPORTANTE: deletar o cache ao adicionar novas séries (ex.: séries de
+#   atividade) para que o CV seja refeito para todas as séries.
+#
+# Parte 7 — Derivações contábeis (macrossetores):
+#   VAB nominal macro  = vab_2023 × cumprod(idx_volume × idx_preco)
+#   VAB nominal total  = soma dos macrossetores por geo × ano
+#   PIB nominal        = VAB total + impostos (deslogados)
+#   Crescimento real   = média ponderada dos idx_volume (pesos = VAB 2023)
+#   ATENÇÃO: os filtros de idx_volume/idx_preco usam is.na(atividade) para
+#   garantir que apenas séries de macrossetor alimentem a Parte 7 — as
+#   séries de atividade têm a mesma variavel mas atividade preenchida.
+#
+# Parte 7b — Derivações contábeis (atividades individuais):
+#   VAB nominal ativ   = vab_2023_ativ × cumprod(idx_volume × idx_preco)
+#   IC 95% propagado   = vab_2023_ativ × cumprod(idx_lo95 × idx_prc_lo95)
+#
+# Entradas:  dados/especiais.rds, dados/conta_producao.rds
+# Saídas:    dados/selecao_modelos.rds   (cache CV — uma linha por série)
+#            dados/projecoes_brutas.rds  (proj + IC por série × ano)
+#            dados/params_modelos.rds    (modelo, parâmetros, MASE, RMSE)
+#            dados/vab_macrossetor_proj.rds
+#            dados/vab_macro_hist.rds    (histórico macro para gráficos)
+#            dados/vab_atividade_hist.rds (histórico atividade para gráficos)
+#            dados/vab_atividade_proj.rds (proj + IC por atividade × geo × ano)
+#            dados/projecoes_derivadas.rds (PIB, VAB, impostos, deflator)
+# ==============================================================================
+
+# ==============================================================================
 # Parâmetros globais
 # ==============================================================================
 
@@ -18,12 +77,6 @@ H         <- 8L    # horizonte de projeção (2024–2031)
 ANO_BASE  <- 2002L
 ANO_FIM   <- 2023L
 MIN_TRAIN <- 15L   # mínimo de obs para treino no CV → test a partir de 2017
-
-# Nota sobre SARIMA: dados anuais não têm sazonalidade intra-anual. Implementado
-# com period=2 para capturar ciclos bienais; auto.arima descarta se não significativo.
-# Nota sobre BSTS: pacote 'bsts' indisponível para R 4.4.2. Substituído por SSM
-# (StructTS local linear trend), que implementa o mesmo modelo base (local linear
-# trend via filtro de Kalman), porém via MLE em vez de MCMC.
 
 # ==============================================================================
 # Mapeamento macrossetores → atividades
