@@ -13,6 +13,7 @@ filters:
   - shinylive
 resources:
   - data/
+engine: knitr
 execute:
   echo: false
 ---
