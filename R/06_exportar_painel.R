@@ -40,7 +40,11 @@ vab_ativ_hist <- if (file.exists("dados/vab_atividade_hist.rds"))
 vab_ativ_rec  <- if (file.exists("dados/vab_atividade_reconciliada.rds"))
   readRDS("dados/vab_atividade_reconciliada.rds") else NULL
 
-geo_meta <- esp |> distinct(geo, geo_tipo, regiao)
+# geo_meta: referência de geo_tipo e regiao para o join com séries históricas
+# Usa esp porque cobre todos os anos históricos e todos os 33 geos
+geo_meta <- esp |>
+  filter(variavel == "pib_nominal", atividade == "total", ano == 2023) |>
+  select(geo, geo_tipo, regiao)
 
 # ==============================================================================
 # Calcular IC 95% (mesma lógica de 05_output.R Parte 2b)
@@ -126,14 +130,22 @@ if (has_ci) {
                          cresc_lo95 = double(), cresc_hi95 = double())
 }
 
-# Deflator histórico
+# Séries históricas com geo_tipo e regiao incluídos diretamente
 pib_nom_hist <- esp |>
   filter(variavel == "pib_nominal", atividade == "total") |>
-  select(geo, ano, pib_nominal = valor)
+  select(geo, geo_tipo, regiao, ano, pib_nominal = valor)
 
 pib_vol_hist <- esp |>
   filter(variavel == "pib_vol_encadeado", atividade == "total") |>
-  select(geo, ano, vol_enc = valor)
+  select(geo, geo_tipo, regiao, ano, vol_enc = valor)
+
+vab_nom_hist <- esp |>
+  filter(variavel == "vab_nominal", atividade == "total") |>
+  select(geo, geo_tipo, regiao, ano, vab_nominal = valor)
+
+imp_nom_hist <- esp |>
+  filter(variavel == "impostos_nominal", atividade == "total") |>
+  select(geo, geo_tipo, regiao, ano, impostos_nominal = valor)
 
 hist_cresc <- pib_vol_hist |>
   arrange(geo, ano) |>
@@ -141,10 +153,11 @@ hist_cresc <- pib_vol_hist |>
   mutate(tx_cresc_pib_real = vol_enc / lag(vol_enc) - 1) |>
   ungroup() |>
   filter(!is.na(tx_cresc_pib_real)) |>
-  select(geo, ano, tx_cresc_pib_real)
+  select(geo, geo_tipo, regiao, ano, tx_cresc_pib_real)
 
 hist_deflator <- pib_nom_hist |>
-  left_join(pib_vol_hist, by = c("geo", "ano")) |>
+  left_join(pib_vol_hist |> select(geo, ano, vol_enc),
+            by = c("geo", "ano")) |>
   arrange(geo, ano) |>
   group_by(geo) |>
   mutate(
@@ -154,25 +167,13 @@ hist_deflator <- pib_nom_hist |>
   ) |>
   ungroup() |>
   filter(!is.na(deflator_pib)) |>
-  select(geo, ano, deflator_pib)
+  select(geo, geo_tipo, regiao, ano, deflator_pib)
 
 pib_2023_ref <- pib_nom_hist |>
   filter(ano == ANO_HIST_FIM) |>
   select(geo, pib_lag_base = pib_nominal)
 
-proj_deflator <- proj_rec |>
-  select(geo, ano, pib_nominal, tx_cresc_pib_real) |>
-  arrange(geo, ano) |>
-  group_by(geo) |>
-  mutate(pib_lag_proj = lag(pib_nominal)) |>
-  ungroup() |>
-  left_join(pib_2023_ref, by = "geo") |>
-  mutate(
-    pib_lag      = coalesce(pib_lag_proj, pib_lag_base),
-    g_nom        = pib_nominal / pib_lag - 1,
-    deflator_pib = (1 + g_nom) / (1 + tx_cresc_pib_real) - 1
-  ) |>
-  select(geo, ano, deflator_pib)
+# deflator_pib já está em projecoes_reconciliadas.rds — sem recalcular
 
 # ==============================================================================
 # 1. serie_principal.csv
@@ -183,19 +184,10 @@ proj_deflator <- proj_rec |>
 
 message("Montando serie_principal.csv...")
 
-vab_nom_hist <- esp |>
-  filter(variavel == "vab_nominal", atividade == "total") |>
-  select(geo, ano, vab_nominal = valor)
-
-imp_nom_hist <- esp |>
-  filter(variavel == "impostos_nominal", atividade == "total") |>
-  select(geo, ano, impostos_nominal = valor)
-
-# Histórico: 5 variáveis em formato longo
+# Histórico: 5 variáveis em formato longo (geo_tipo/regiao já nas séries)
 hist_principal <- bind_rows(
   pib_nom_hist |>
     filter(ano >= ANO_HIST_INI) |>
-    left_join(geo_meta, by = "geo") |>
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "pib_nominal",
               valor = pib_nominal,
@@ -203,7 +195,6 @@ hist_principal <- bind_rows(
               tipo = "Histórico"),
   vab_nom_hist |>
     filter(ano >= ANO_HIST_INI) |>
-    left_join(geo_meta, by = "geo") |>
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "vab_nominal_total",
               valor = vab_nominal,
@@ -211,7 +202,6 @@ hist_principal <- bind_rows(
               tipo = "Histórico"),
   imp_nom_hist |>
     filter(ano >= ANO_HIST_INI) |>
-    left_join(geo_meta, by = "geo") |>
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "impostos_nominal",
               valor = impostos_nominal,
@@ -219,7 +209,6 @@ hist_principal <- bind_rows(
               tipo = "Histórico"),
   hist_cresc |>
     filter(ano >= ANO_HIST_INI + 1L) |>
-    left_join(geo_meta, by = "geo") |>
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "cresc_real_pib",
               valor = round(tx_cresc_pib_real * 100, 3),
@@ -227,7 +216,6 @@ hist_principal <- bind_rows(
               tipo = "Histórico"),
   hist_deflator |>
     filter(ano >= ANO_HIST_INI + 1L) |>
-    left_join(geo_meta, by = "geo") |>
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "deflator_pib",
               valor = round(deflator_pib * 100, 3),
@@ -239,7 +227,7 @@ hist_principal <- bind_rows(
 proj_principal <- bind_rows(
   proj_rec |>
     left_join(pib_ci, by = c("geo", "ano")) |>
-    left_join(geo_meta, by = "geo") |>
+
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "pib_nominal",
               valor = pib_nominal,
@@ -247,7 +235,7 @@ proj_principal <- bind_rows(
               tipo = "Projetado"),
   proj_rec |>
     left_join(vab_total_ci, by = c("geo", "ano")) |>
-    left_join(geo_meta, by = "geo") |>
+
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "vab_nominal_total",
               valor = vab_nominal_total,
@@ -255,7 +243,7 @@ proj_principal <- bind_rows(
               tipo = "Projetado"),
   proj_rec |>
     left_join(imp_ci, by = c("geo", "ano")) |>
-    left_join(geo_meta, by = "geo") |>
+
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "impostos_nominal",
               valor = impostos_nominal,
@@ -263,7 +251,7 @@ proj_principal <- bind_rows(
               tipo = "Projetado"),
   proj_rec |>
     left_join(cresc_ci, by = c("geo", "ano")) |>
-    left_join(geo_meta, by = "geo") |>
+
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "cresc_real_pib",
               valor = round(tx_cresc_pib_real * 100, 3),
@@ -271,8 +259,6 @@ proj_principal <- bind_rows(
               hi95 = round(cresc_hi95 * 100, 3),
               tipo = "Projetado"),
   proj_rec |>
-    left_join(proj_deflator, by = c("geo", "ano")) |>
-    left_join(geo_meta, by = "geo") |>
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "deflator_pib",
               valor = round(deflator_pib * 100, 3),
@@ -309,7 +295,6 @@ ATIV_MACRO_MAP <- tibble(
 )
 
 hist_mac <- vab_hist |>
-  left_join(geo_meta, by = "geo") |>
   transmute(geo, geo_tipo, regiao, macrossetor, ano,
             vab_nominal = val_corrente,
             vab_lo95 = NA_real_, vab_hi95 = NA_real_,
@@ -338,7 +323,6 @@ if (!is.null(vab_ativ_hist) && !is.null(vab_ativ_rec)) {
   message("Montando vab_atividade.csv...")
 
   hist_ativ <- vab_ativ_hist |>
-    left_join(geo_meta, by = "geo") |>
     left_join(ATIV_MACRO_MAP, by = "atividade") |>
     transmute(geo, geo_tipo, regiao, atividade, macrossetor, ano,
               vab_nominal = val_corrente,
@@ -346,7 +330,7 @@ if (!is.null(vab_ativ_hist) && !is.null(vab_ativ_rec)) {
               tipo = "Histórico")
 
   proj_ativ <- vab_ativ_rec |>
-    left_join(geo_meta, by = "geo") |>
+    left_join(geo_meta |> select(geo, geo_tipo, regiao), by = "geo") |>
     transmute(geo, geo_tipo, regiao, atividade, macrossetor, ano,
               vab_nominal, vab_lo95, vab_hi95,
               tipo = "Projetado")
