@@ -37,6 +37,13 @@ library(tidyverse)
 #     → output/graficos/series_brutas/      (9 plots séries brutas)
 #     → output/graficos/              (5 plots de resumo)
 #
+#   06_exportar_painel.R
+#     → painel/data/serie_principal.csv  (histórico+proj, 5 variáveis, IC 95%)
+#     → painel/data/vab_macrossetor.csv  (histórico+proj por macrossetor, IC 95%)
+#     → painel/data/vab_atividade.csv    (histórico+proj por atividade, IC 95%)
+#     (CSVs versionados no git — usados pelo painel Quarto+shinylive no
+#      GitHub Pages. Executar 06 após qualquer atualização do pipeline.)
+#
 # Cache do CV (03_projecao.R):
 #   Se dados/selecao_modelos.rds existir, o CV é pulado e os modelos
 #   salvos são reutilizados. IMPORTANTE: deletar o arquivo ao adicionar
@@ -48,7 +55,8 @@ scripts <- c(
   "R/02_consistencia.R",
   "R/03_projecao.R",
   "R/04_reconciliacao.R",
-  "R/05_output.R"
+  "R/05_output.R",
+  "R/06_exportar_painel.R"
 )
 
 t_total <- proc.time()

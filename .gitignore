@@ -14,6 +14,11 @@ dados/
 # Output gerado
 output/
 
+# Quarto cache (não versionar)
+painel/.quarto/
+painel/*_files/
+painel/_site/
+
 # Sistema operacional
 .DS_Store
 Thumbs.db

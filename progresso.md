@@ -294,6 +294,57 @@ para que o CV seja refeito com as 1.089 séries completas.
 
 ---
 
+## Etapa 10 — Painel interativo Quarto + shinylive (GitHub Pages)
+
+**O que foi feito:**
+- Criado painel interativo com Quarto Dashboard + shinylive, publicável no
+  GitHub Pages sem servidor (R roda no browser via WebAssembly).
+
+**Novos arquivos criados:**
+
+| Arquivo | Função |
+|---------|--------|
+| `R/06_exportar_painel.R` | Exporta dados do pipeline para `painel/data/*.csv` (formato para o browser) |
+| `painel/painel.qmd` | Painel Quarto Dashboard com bloco shinylive (UI + server Shiny completo) |
+| `.github/workflows/publish-painel.yml` | GitHub Actions: renderiza o painel e publica na branch `gh-pages` |
+
+**Arquivos modificados:** `R/run_all.R` (inclui script 06), `.gitignore` (exclui cache Quarto)
+
+**Estrutura do painel (5 abas):**
+
+| Aba | Conteúdo |
+|-----|----------|
+| Série Histórica | Linha histórico + projetado com ribbon IC 95%; filtros território + variável |
+| Macrossetor | Stacked area (todos) ou linha com IC 95% (individual); filtro macrossetor |
+| Atividade | Stacked area (todas) ou linha com IC 95% (individual); filtro atividade |
+| Comparativo | Múltiplos territórios sobrepostos (sólido = histórico, tracejado = projetado) |
+| Tabela | Dados numéricos com botões de exportação CSV/Excel |
+
+**Sidebar global:** território, variável, toggle dia/noite (flatly/darkly).
+
+**Fluxo de publicação:**
+1. Rodar pipeline completo (`run_all.R`) localmente — gera `painel/data/*.csv`
+2. Commitar os CSVs (`git add painel/data/`)
+3. `git push` → GitHub Actions renderiza e publica em `gh-pages` automaticamente
+4. URL pública: `https://yuricesarsilva.github.io/relatorio_projecao_pib_estados/`
+
+**Pré-requisito local (uma vez):** instalar a extensão shinylive com:
+```
+cd painel
+quarto add quarto-ext/shinylive
+```
+O diretório `_extensions/` gerado deve ser commitado junto com o painel.
+
+**Dados exportados para o painel:**
+
+| Arquivo CSV | Linhas aprox. | Conteúdo |
+|-------------|---------------|----------|
+| `painel/data/serie_principal.csv` | ~4.950 | 5 variáveis × 33 geos × 30 anos, com IC 95% |
+| `painel/data/vab_macrossetor.csv` | ~3.960 | 4 macrossetores × 33 geos × 30 anos, com IC 95% |
+| `painel/data/vab_atividade.csv` | ~11.880 | 12 atividades × 33 geos × 30 anos, com IC 95% |
+
+---
+
 ## Pipeline completo (`run_all.R`)
 
 - Criado `run_all.R` para execução sequencial dos 5 scripts com tratamento de erros e cronometragem por etapa.

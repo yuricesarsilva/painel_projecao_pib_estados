@@ -1,0 +1,520 @@
+---
+title: "Projeções PIB Estadual 2024–2031"
+format:
+  dashboard:
+    theme:
+      light: flatly
+      dark: darkly
+    logo: ""
+    nav-buttons:
+      - icon: github
+        href: https://github.com/yuricesarsilva/relatorio_projecao_pib_estados
+filters:
+  - shinylive
+resources:
+  - data/
+execute:
+  echo: false
+---
+
+```{shinylive-r}
+#| standalone: true
+#| viewerHeight: 850
+
+library(shiny)
+library(bslib)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(DT)
+library(scales)
+
+# ==============================================================================
+# Dados (lidos via HTTP — painel/data/ é servido como estático no GitHub Pages)
+# ==============================================================================
+
+serie    <- tryCatch(read.csv("data/serie_principal.csv",  na.strings = ""),
+                     error = function(e) NULL)
+vab_mac  <- tryCatch(read.csv("data/vab_macrossetor.csv",  na.strings = ""),
+                     error = function(e) NULL)
+vab_ativ <- tryCatch(read.csv("data/vab_atividade.csv",    na.strings = ""),
+                     error = function(e) NULL)
+
+# ==============================================================================
+# Constantes
+# ==============================================================================
+
+ANO_HIST_FIM <- 2023L
+ANO_PROJ_FIM <- 2031L
+
+GEO_ORDER <- c(
+  "Brasil",
+  "Norte", "Rondônia", "Acre", "Amazonas", "Roraima",
+  "Pará", "Amapá", "Tocantins",
+  "Nordeste", "Maranhão", "Piauí", "Ceará", "Rio Grande do Norte",
+  "Paraíba", "Pernambuco", "Alagoas", "Sergipe", "Bahia",
+  "Sudeste", "Minas Gerais", "Espírito Santo", "Rio de Janeiro", "São Paulo",
+  "Sul", "Paraná", "Santa Catarina", "Rio Grande do Sul",
+  "Centro-Oeste", "Mato Grosso do Sul", "Mato Grosso", "Goiás", "Distrito Federal"
+)
+
+GEO_TIPO_LABEL <- c(brasil = "Brasil", regiao = "Região", estado = "Estado")
+
+VARIAVEL_LABEL <- c(
+  pib_nominal      = "PIB Nominal (R$ milhões)",
+  vab_nominal_total= "VAB Nominal Total (R$ milhões)",
+  impostos_nominal = "Impostos Líquidos de Subsídios (R$ milhões)",
+  cresc_real_pib   = "Crescimento Real do PIB (% a.a.)",
+  deflator_pib     = "Deflator Implícito do PIB (% a.a.)"
+)
+
+MACRO_LABEL <- c(
+  agropecuaria = "Agropecuária",
+  industria    = "Indústria",
+  adm_publica  = "Adm. Pública",
+  servicos     = "Serviços"
+)
+
+ATIVIDADE_LABEL <- c(
+  agropecuaria           = "Agropecuária",
+  ind_extrativa          = "Ind. Extrativas",
+  ind_transformacao      = "Ind. de Transformação",
+  eletricidade_gas_agua  = "Eletricidade/Gás/Água",
+  construcao             = "Construção",
+  comercio_veiculos      = "Comércio e Veículos",
+  transporte_armazenagem = "Transporte e Armazenagem",
+  informacao_comunicacao = "Informação e Comunicação",
+  financeiro_seguros     = "Financeiro e Seguros",
+  imobiliaria            = "Atividades Imobiliárias",
+  adm_publica            = "Adm. Pública",
+  outros_servicos        = "Outros Serviços"
+)
+
+PALETA_MACRO <- c(
+  agropecuaria = "#2E8B57",
+  industria    = "#E67E22",
+  adm_publica  = "#8E44AD",
+  servicos     = "#2980B9"
+)
+
+PALETA_ATIV <- setNames(
+  c("#A6CEE3","#1F78B4","#B2DF8A","#33A02C",
+    "#FB9A99","#E31A1C","#FDBF6F","#FF7F00",
+    "#CAB2D6","#6A3D9A","#FFFF99","#B15928"),
+  names(ATIVIDADE_LABEL)
+)
+
+COR_HIST  <- "#1F497D"
+COR_PROJ  <- "#C0392B"
+COR_RIBBN <- "#C0392B"
+
+tema_base <- theme_minimal(base_size = 11) +
+  theme(
+    plot.title       = element_text(face = "bold", size = 12),
+    plot.subtitle    = element_text(colour = "grey40", size = 9),
+    plot.caption     = element_text(colour = "grey55", size = 7),
+    panel.grid.minor = element_blank(),
+    legend.position  = "bottom",
+    strip.text       = element_text(face = "bold", size = 9),
+    axis.text        = element_text(size = 8)
+  )
+
+vl <- geom_vline(xintercept = ANO_HIST_FIM + 0.5,
+                 linetype = "dashed", colour = "grey55", linewidth = 0.4)
+
+eh_pct <- function(var) var %in% c("cresc_real_pib", "deflator_pib")
+
+formato_y <- function(var) {
+  if (eh_pct(var))
+    scale_y_continuous(labels = label_number(suffix = "%", accuracy = 0.1,
+                                             decimal.mark = ","))
+  else
+    scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
+                                             accuracy = 1, scale = 1e-3,
+                                             suffix = " bi"))
+}
+
+# ==============================================================================
+# UI
+# ==============================================================================
+
+ui <- page_sidebar(
+  title = "Projeções PIB Estadual — Brasil 2024–2031",
+  theme = bs_theme(preset = "flatly", version = 5),
+
+  sidebar = sidebar(
+    width = 260,
+    # Toggle dia/noite
+    input_dark_mode(id = "modo_cor", mode = "light"),
+    hr(),
+    # Território
+    selectInput("geo", "Território",
+                choices  = GEO_ORDER,
+                selected = "Brasil"),
+    # Variável principal
+    selectInput("variavel", "Variável",
+                choices  = setNames(names(VARIAVEL_LABEL), VARIAVEL_LABEL),
+                selected = "pib_nominal"),
+    hr(),
+    # Filtro extra: macrossetor (visível nas abas 2 e 4)
+    conditionalPanel(
+      "input.abas === 'Macrossetor' || input.abas === 'Comparativo'",
+      selectInput("macrossetor", "Macrossetor",
+                  choices  = c("Todos" = "todos",
+                               setNames(names(MACRO_LABEL), MACRO_LABEL)),
+                  selected = "todos")
+    ),
+    # Filtro extra: atividade (visível na aba 3)
+    conditionalPanel(
+      "input.abas === 'Atividade'",
+      selectInput("atividade", "Atividade",
+                  choices  = c("Todas" = "todas",
+                               setNames(names(ATIVIDADE_LABEL), ATIVIDADE_LABEL)),
+                  selected = "todas")
+    ),
+    # Multi-select territórios (visível na aba 4)
+    conditionalPanel(
+      "input.abas === 'Comparativo'",
+      selectInput("geos_comp", "Territórios a comparar",
+                  choices  = GEO_ORDER,
+                  selected = c("Brasil", "Norte", "Nordeste",
+                               "Sudeste", "Sul", "Centro-Oeste"),
+                  multiple = TRUE)
+    ),
+    hr(),
+    tags$small(tags$em("Fonte: IBGE Contas Regionais (2002–2023). ",
+                       "Projeções próprias com reconciliação top-down (2024–2031)."))
+  ),
+
+  navset_card_tab(
+    id = "abas",
+
+    # ---- Aba 1: Série Histórica + Projeção ----------------------------------
+    nav_panel("Série Histórica",
+      card(
+        full_screen = TRUE,
+        card_header(textOutput("titulo_serie")),
+        plotOutput("plot_serie", height = "500px")
+      )
+    ),
+
+    # ---- Aba 2: VAB por Macrossetor -----------------------------------------
+    nav_panel("Macrossetor",
+      card(
+        full_screen = TRUE,
+        card_header("VAB por Macrossetor"),
+        plotOutput("plot_macro", height = "500px")
+      )
+    ),
+
+    # ---- Aba 3: VAB por Atividade -------------------------------------------
+    nav_panel("Atividade",
+      card(
+        full_screen = TRUE,
+        card_header("VAB por Atividade Econômica"),
+        plotOutput("plot_ativ", height = "500px")
+      )
+    ),
+
+    # ---- Aba 4: Comparativo entre territórios --------------------------------
+    nav_panel("Comparativo",
+      card(
+        full_screen = TRUE,
+        card_header(textOutput("titulo_comp")),
+        plotOutput("plot_comp", height = "500px")
+      )
+    ),
+
+    # ---- Aba 5: Tabela de dados ----------------------------------------------
+    nav_panel("Tabela",
+      card(
+        full_screen = TRUE,
+        card_header("Dados numéricos"),
+        DTOutput("tabela_dados")
+      )
+    )
+  )
+)
+
+# ==============================================================================
+# Server
+# ==============================================================================
+
+server <- function(input, output, session) {
+
+  # Tema reativo dia/noite
+  observe({
+    session$setCurrentTheme(
+      if (isTRUE(input$modo_cor == "dark"))
+        bs_theme(preset = "darkly",  version = 5)
+      else
+        bs_theme(preset = "flatly",  version = 5)
+    )
+  })
+
+  # Dados filtrados por território
+  dados_serie <- reactive({
+    req(serie)
+    serie |>
+      filter(geo == input$geo, variavel == input$variavel) |>
+      mutate(tipo = factor(tipo, levels = c("Histórico", "Projetado")))
+  })
+
+  # ---- Aba 1: Série Histórica + Projeção ------------------------------------
+  output$titulo_serie <- renderText({
+    paste0(VARIAVEL_LABEL[input$variavel], " — ", input$geo)
+  })
+
+  output$plot_serie <- renderPlot({
+    df <- dados_serie()
+    req(nrow(df) > 0)
+
+    unidade <- if (eh_pct(input$variavel)) "% a.a." else "R$ bilhões"
+    subtitulo <- paste0("Histórico 2002–", ANO_HIST_FIM,
+                        " + Projeção ", ANO_HIST_FIM + 1L, "–", ANO_PROJ_FIM,
+                        " com IC 95%")
+
+    ggplot(df, aes(x = ano)) +
+      geom_ribbon(
+        aes(ymin = lo95, ymax = hi95),
+        data = \(d) filter(d, tipo == "Projetado", !is.na(lo95)),
+        fill = COR_RIBBN, alpha = 0.20
+      ) +
+      vl +
+      { if (eh_pct(input$variavel))
+          geom_hline(yintercept = 0, colour = "grey70",
+                     linewidth = 0.3, linetype = "dotted") } +
+      geom_line(aes(y = valor, colour = tipo), linewidth = 1.1) +
+      geom_point(aes(y = valor, colour = tipo), size = 2.0) +
+      scale_colour_manual(
+        values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = NULL
+      ) +
+      scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
+      formato_y(input$variavel) +
+      labs(title   = paste0(VARIAVEL_LABEL[input$variavel], " — ", input$geo),
+           subtitle = subtitulo,
+           x = NULL, y = unidade,
+           caption = "Fonte: IBGE (histórico); projeção própria (2024–2031).") +
+      tema_base
+  })
+
+  # ---- Aba 2: VAB Macrossetor -----------------------------------------------
+  output$plot_macro <- renderPlot({
+    req(vab_mac)
+    df <- vab_mac |>
+      filter(geo == input$geo) |>
+      mutate(
+        tipo       = factor(tipo, levels = c("Histórico", "Projetado")),
+        mac_label  = coalesce(MACRO_LABEL[macrossetor], macrossetor)
+      )
+
+    if (input$macrossetor != "todos")
+      df <- df |> filter(macrossetor == input$macrossetor)
+
+    req(nrow(df) > 0)
+
+    if (input$macrossetor == "todos") {
+      # Stacked area (histórico) + linhas com ribbon (projetado)
+      ggplot(df, aes(x = ano, fill = mac_label, colour = mac_label)) +
+        geom_area(
+          data = \(d) filter(d, tipo == "Histórico"),
+          aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.70
+        ) +
+        geom_area(
+          data = \(d) filter(d, tipo == "Projetado"),
+          aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.35
+        ) +
+        vl +
+        scale_fill_manual(values = PALETA_MACRO,   name = NULL) +
+        scale_colour_manual(values = PALETA_MACRO, name = NULL) +
+        scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
+        scale_y_continuous(
+          labels = label_number(big.mark = ".", decimal.mark = ",",
+                                accuracy = 1, suffix = " bi", scale = 1)
+        ) +
+        labs(title    = paste0("VAB por Macrossetor — ", input$geo),
+             subtitle = "R$ bilhões (correntes) | área empilhada; região sombreada = projetado",
+             x = NULL, y = "R$ bilhões",
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
+        tema_base
+    } else {
+      # Linha única com ribbon IC 95%
+      ggplot(df, aes(x = ano)) +
+        geom_ribbon(
+          aes(ymin = vab_lo95 / 1e3, ymax = vab_hi95 / 1e3),
+          data = \(d) filter(d, tipo == "Projetado", !is.na(vab_lo95)),
+          fill = COR_RIBBN, alpha = 0.20
+        ) +
+        vl +
+        geom_line(aes(y = vab_nominal / 1e3, colour = tipo), linewidth = 1.1) +
+        geom_point(aes(y = vab_nominal / 1e3, colour = tipo), size = 2.0) +
+        scale_colour_manual(
+          values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = NULL
+        ) +
+        scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
+        scale_y_continuous(
+          labels = label_number(big.mark = ".", decimal.mark = ",",
+                                accuracy = 0.1, suffix = " bi")
+        ) +
+        labs(title    = paste0("VAB — ", MACRO_LABEL[input$macrossetor],
+                               " — ", input$geo),
+             subtitle = "R$ bilhões (correntes) | IC 95% no período projetado",
+             x = NULL, y = "R$ bilhões",
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
+        tema_base
+    }
+  })
+
+  # ---- Aba 3: VAB Atividade -------------------------------------------------
+  output$plot_ativ <- renderPlot({
+    req(vab_ativ)
+    df <- vab_ativ |>
+      filter(geo == input$geo) |>
+      mutate(
+        tipo       = factor(tipo, levels = c("Histórico", "Projetado")),
+        ativ_label = coalesce(ATIVIDADE_LABEL[atividade], atividade)
+      )
+
+    if (input$atividade != "todas")
+      df <- df |> filter(atividade == input$atividade)
+
+    req(nrow(df) > 0)
+
+    if (input$atividade == "todas") {
+      # Stacked area por atividade
+      ggplot(df, aes(x = ano, fill = ativ_label, colour = ativ_label)) +
+        geom_area(
+          data = \(d) filter(d, tipo == "Histórico"),
+          aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.80
+        ) +
+        geom_area(
+          data = \(d) filter(d, tipo == "Projetado"),
+          aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.40
+        ) +
+        vl +
+        scale_fill_manual(values = PALETA_ATIV,   name = NULL) +
+        scale_colour_manual(values = PALETA_ATIV, name = NULL) +
+        scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
+        scale_y_continuous(
+          labels = label_number(big.mark = ".", decimal.mark = ",",
+                                accuracy = 1, suffix = " bi", scale = 1)
+        ) +
+        labs(title    = paste0("VAB por Atividade — ", input$geo),
+             subtitle = "R$ bilhões (correntes) | empilhado; sombreado = projetado",
+             x = NULL, y = "R$ bilhões",
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
+        tema_base +
+        theme(legend.text = element_text(size = 7),
+              legend.key.size = unit(0.4, "cm"))
+    } else {
+      # Linha única com ribbon IC 95%
+      ggplot(df, aes(x = ano)) +
+        geom_ribbon(
+          aes(ymin = vab_lo95 / 1e3, ymax = vab_hi95 / 1e3),
+          data = \(d) filter(d, tipo == "Projetado", !is.na(vab_lo95)),
+          fill = COR_RIBBN, alpha = 0.20
+        ) +
+        vl +
+        geom_line(aes(y = vab_nominal / 1e3, colour = tipo), linewidth = 1.1) +
+        geom_point(aes(y = vab_nominal / 1e3, colour = tipo), size = 2.0) +
+        scale_colour_manual(
+          values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = NULL
+        ) +
+        scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
+        scale_y_continuous(
+          labels = label_number(big.mark = ".", decimal.mark = ",",
+                                accuracy = 0.1, suffix = " bi")
+        ) +
+        labs(title    = paste0("VAB — ", ATIVIDADE_LABEL[input$atividade],
+                               " — ", input$geo),
+             subtitle = "R$ bilhões (correntes) | IC 95% no período projetado",
+             x = NULL, y = "R$ bilhões",
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
+        tema_base
+    }
+  })
+
+  # ---- Aba 4: Comparativo ---------------------------------------------------
+  output$titulo_comp <- renderText({
+    paste0("Comparativo — ", VARIAVEL_LABEL[input$variavel])
+  })
+
+  output$plot_comp <- renderPlot({
+    req(serie, length(input$geos_comp) >= 1)
+    df <- serie |>
+      filter(geo %in% input$geos_comp, variavel == input$variavel) |>
+      mutate(tipo = factor(tipo, levels = c("Histórico", "Projetado")))
+
+    req(nrow(df) > 0)
+
+    unidade <- if (eh_pct(input$variavel)) "% a.a." else "R$ bilhões"
+
+    ggplot(df, aes(x = ano, y = valor, colour = geo, linetype = tipo)) +
+      vl +
+      { if (eh_pct(input$variavel))
+          geom_hline(yintercept = 0, colour = "grey70",
+                     linewidth = 0.3, linetype = "dotted") } +
+      geom_line(linewidth = 0.9) +
+      scale_linetype_manual(
+        values = c(Histórico = "solid", Projetado = "dashed"), name = NULL
+      ) +
+      scale_colour_brewer(palette = "Set2", name = NULL) +
+      scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
+      { if (!eh_pct(input$variavel))
+          scale_y_continuous(
+            labels = label_number(big.mark = ".", decimal.mark = ",",
+                                  accuracy = 1, scale = 1e-3, suffix = " bi"))
+        else
+          scale_y_continuous(
+            labels = label_number(suffix = "%", accuracy = 0.1,
+                                  decimal.mark = ","))
+      } +
+      labs(title    = paste0(VARIAVEL_LABEL[input$variavel],
+                             " — Comparativo entre territórios"),
+           subtitle = paste0("Histórico 2002–", ANO_HIST_FIM,
+                             " (traço contínuo) + Projeção ",
+                             ANO_HIST_FIM + 1L, "–", ANO_PROJ_FIM,
+                             " (tracejado)"),
+           x = NULL, y = unidade,
+           caption = "Fonte: IBGE (histórico); projeção própria.") +
+      tema_base
+  })
+
+  # ---- Aba 5: Tabela --------------------------------------------------------
+  output$tabela_dados <- renderDT({
+    req(serie)
+    df <- serie |>
+      filter(geo == input$geo, variavel == input$variavel) |>
+      transmute(
+        Território = geo,
+        Tipo       = tipo,
+        Ano        = ano,
+        Variável   = coalesce(VARIAVEL_LABEL[variavel], variavel),
+        Valor      = round(valor, 3),
+        `LI 95%`   = round(lo95,  3),
+        `LS 95%`   = round(hi95,  3)
+      )
+
+    datatable(
+      df,
+      extensions = "Buttons",
+      options = list(
+        dom        = "Bfrtip",
+        buttons    = list("csv", "excel"),
+        pageLength = 15,
+        language   = list(
+          search     = "Buscar:",
+          lengthMenu = "Mostrar _MENU_ linhas",
+          info       = "Linhas _START_ a _END_ de _TOTAL_",
+          paginate   = list(previous = "Anterior", `next` = "Próximo")
+        )
+      ),
+      rownames = FALSE
+    ) |>
+      formatRound(columns = c("Valor", "LI 95%", "LS 95%"),
+                  digits = 3, mark = ".", dec.mark = ",")
+  })
+}
+
+shinyApp(ui, server)
+```

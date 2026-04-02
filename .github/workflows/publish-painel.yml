@@ -1,0 +1,43 @@
+name: Publicar Painel PIB
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "painel/**"
+      - ".github/workflows/publish-painel.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Quarto CLI
+      - name: Instalar Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: "1.5"
+
+      # Renderizar o painel (CSVs já estão em painel/data/ versionados no repo)
+      - name: Renderizar painel Quarto
+        run: quarto render painel/painel.qmd --output-dir _site
+        working-directory: ${{ github.workspace }}/painel
+
+      # Publicar na branch gh-pages
+      - name: Publicar no GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./painel/_site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "Deploy painel PIB — ${{ github.sha }}"
