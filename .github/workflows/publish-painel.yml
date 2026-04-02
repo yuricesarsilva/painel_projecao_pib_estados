@@ -33,8 +33,10 @@ jobs:
 
       - name: Instalar pacotes R
         run: |
-          Rscript -e 'install.packages(c("knitr", "rmarkdown", "shinylive"),
-            repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))'
+          Rscript -e 'install.packages(
+            c("knitr", "rmarkdown", "shinylive",
+              "shiny", "bslib", "ggplot2", "dplyr", "tidyr", "DT", "scales"),
+            repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/noble/latest"))'
 
       # Quarto CLI
       - name: Instalar Quarto
