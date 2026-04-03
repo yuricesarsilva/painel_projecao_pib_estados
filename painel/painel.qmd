@@ -536,7 +536,7 @@ server <- function(input, output, session) {
       formatC(x, format = "f", digits = dec, big.mark = ".", decimal.mark = ",",
               big.interval = 3L)
 
-    num_cols <- names(df)[sapply(df, is.numeric)]
+    num_cols <- setdiff(names(df)[sapply(df, is.numeric)], "Ano")
     for (col in num_cols)
       df[[col]] <- fmt_br(df[[col]])
 
