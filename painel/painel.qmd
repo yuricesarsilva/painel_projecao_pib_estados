@@ -217,7 +217,42 @@ ui <- page_sidebar(
     nav_panel("Tabela",
       card(full_screen = TRUE,
         card_header("Dados numéricos"),
-        DTOutput("tabela_dados"))
+        layout_columns(
+          col_widths = c(4, 8),
+          card(
+            radioButtons("tabela_fonte", "Exibir dados de:",
+              choices = c(
+                "Série Principal"  = "serie",
+                "VAB Macrossetor"  = "macrossetor",
+                "VAB Atividade"    = "atividade"
+              ),
+              selected = "serie"
+            ),
+            conditionalPanel(
+              "input.tabela_fonte === 'serie'",
+              selectInput("tabela_geo",  "Território", choices = GEO_ORDER, selected = "Brasil"),
+              selectInput("tabela_var",  "Variável",
+                choices = setNames(names(VARIAVEL_LABEL), VARIAVEL_LABEL),
+                selected = "pib_nominal")
+            ),
+            conditionalPanel(
+              "input.tabela_fonte === 'macrossetor'",
+              selectInput("tabela_geo_mac", "Território", choices = GEO_ORDER, selected = "Brasil"),
+              selectInput("tabela_mac", "Macrossetor",
+                choices = c("Todos" = "todos", setNames(names(MACRO_LABEL), MACRO_LABEL)),
+                selected = "todos")
+            ),
+            conditionalPanel(
+              "input.tabela_fonte === 'atividade'",
+              selectInput("tabela_geo_ativ", "Território", choices = GEO_ORDER, selected = "Brasil"),
+              selectInput("tabela_ativ", "Atividade",
+                choices = c("Todas" = "todas", setNames(names(ATIVIDADE_LABEL), ATIVIDADE_LABEL)),
+                selected = "todas")
+            )
+          ),
+          DTOutput("tabela_dados")
+        )
+      )
     )
   )
 )
@@ -455,18 +490,43 @@ server <- function(input, output, session) {
 
   # ---- Aba 5: Tabela --------------------------------------------------------
   output$tabela_dados <- renderDT({
-    df <- serie() |>
-      filter(geo == input$geo, variavel == input$variavel) |>
-      transmute(
-        Territorio = geo,
-        Tipo       = tipo,
-        Ano        = ano,
-        Variavel   = coalesce(VARIAVEL_LABEL[variavel], variavel),
-        Valor      = round(valor, 3),
-        LI_95      = round(lo95,  3),
-        LS_95      = round(hi95,  3)
+    df <- if (input$tabela_fonte == "serie") {
+      serie() |>
+        filter(geo == input$tabela_geo, variavel == input$tabela_var) |>
+        transmute(
+          Territorio = geo, Tipo = tipo, Ano = ano,
+          Variavel   = coalesce(VARIAVEL_LABEL[variavel], variavel),
+          Valor_RS_pct = round(valor, 3),
+          LI_95 = round(lo95, 3),
+          LS_95 = round(hi95, 3)
+        )
+    } else if (input$tabela_fonte == "macrossetor") {
+      d <- vab_mac() |>
+        filter(geo == input$tabela_geo_mac)
+      if (input$tabela_mac != "todos")
+        d <- d |> filter(macrossetor == input$tabela_mac)
+      d |> transmute(
+        Territorio  = geo, Tipo = tipo, Ano = ano,
+        Macrossetor = coalesce(MACRO_LABEL[macrossetor], macrossetor),
+        VAB_nominal_RS_mi = round(vab_nominal, 1),
+        LI_95 = round(vab_lo95, 1),
+        LS_95 = round(vab_hi95, 1)
       )
-    datatable(df, options = list(pageLength = 15), rownames = FALSE)
+    } else {
+      d <- vab_ativ() |>
+        filter(geo == input$tabela_geo_ativ)
+      if (input$tabela_ativ != "todas")
+        d <- d |> filter(atividade == input$tabela_ativ)
+      d |> transmute(
+        Territorio  = geo, Tipo = tipo, Ano = ano,
+        Macrossetor = coalesce(MACRO_LABEL[macrossetor], macrossetor),
+        Atividade   = coalesce(ATIVIDADE_LABEL[atividade], atividade),
+        VAB_nominal_RS_mi = round(vab_nominal, 1),
+        LI_95 = round(vab_lo95, 1),
+        LS_95 = round(vab_hi95, 1)
+      )
+    }
+    datatable(df, options = list(pageLength = 15, scrollX = TRUE), rownames = FALSE)
   })
 }
 
