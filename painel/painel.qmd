@@ -39,18 +39,20 @@ serie_err <- vab_mac_err <- vab_ativ_err <- NULL
 
 BASE_URL <- "https://yuricesarsilva.github.io/relatorio_projecao_pib_estados/data"
 
-serie <- tryCatch(
-  read.csv(url(paste0(BASE_URL, "/serie_principal.csv")), na.strings = ""),
-  error = function(e) { serie_err <<- conditionMessage(e); NULL }
-)
-vab_mac <- tryCatch(
-  read.csv(url(paste0(BASE_URL, "/vab_macrossetor.csv")), na.strings = ""),
-  error = function(e) { vab_mac_err <<- conditionMessage(e); NULL }
-)
-vab_ativ <- tryCatch(
-  read.csv(url(paste0(BASE_URL, "/vab_atividade.csv")), na.strings = ""),
-  error = function(e) { vab_ativ_err <<- conditionMessage(e); NULL }
-)
+fetch_csv <- function(nome, destino) {
+  tryCatch({
+    download.file(paste0(BASE_URL, "/", nome), destino, quiet = TRUE)
+    read.csv(destino, na.strings = "")
+  }, error = function(e) e)
+}
+
+res_serie    <- fetch_csv("serie_principal.csv",  "serie.csv")
+res_vab_mac  <- fetch_csv("vab_macrossetor.csv",  "vab_mac.csv")
+res_vab_ativ <- fetch_csv("vab_atividade.csv",    "vab_ativ.csv")
+
+serie    <- if (inherits(res_serie,    "error")) { serie_err    <<- conditionMessage(res_serie);    NULL } else res_serie
+vab_mac  <- if (inherits(res_vab_mac,  "error")) { vab_mac_err  <<- conditionMessage(res_vab_mac);  NULL } else res_vab_mac
+vab_ativ <- if (inherits(res_vab_ativ, "error")) { vab_ativ_err <<- conditionMessage(res_vab_ativ); NULL } else res_vab_ativ
 
 # ==============================================================================
 # Constantes
