@@ -184,6 +184,36 @@ ui <- page_sidebar(
                                "Sudeste", "Sul", "Centro-Oeste"),
                   multiple = TRUE)
     ),
+    conditionalPanel(
+      "input.abas === 'Tabela'",
+      radioButtons("tabela_fonte", "Exibir dados de:",
+        choices = c("Série Principal" = "serie",
+                    "VAB Macrossetor" = "macrossetor",
+                    "VAB Atividade"   = "atividade"),
+        selected = "serie"
+      ),
+      conditionalPanel(
+        "input.abas === 'Tabela' && input.tabela_fonte === 'serie'",
+        selectInput("tabela_geo", "Território", choices = GEO_ORDER, selected = "Brasil"),
+        selectInput("tabela_var", "Variável",
+          choices = setNames(names(VARIAVEL_LABEL), VARIAVEL_LABEL),
+          selected = "pib_nominal")
+      ),
+      conditionalPanel(
+        "input.abas === 'Tabela' && input.tabela_fonte === 'macrossetor'",
+        selectInput("tabela_geo_mac", "Território", choices = GEO_ORDER, selected = "Brasil"),
+        selectInput("tabela_mac", "Macrossetor",
+          choices = c("Todos" = "todos", setNames(names(MACRO_LABEL), MACRO_LABEL)),
+          selected = "todos")
+      ),
+      conditionalPanel(
+        "input.abas === 'Tabela' && input.tabela_fonte === 'atividade'",
+        selectInput("tabela_geo_ativ", "Território", choices = GEO_ORDER, selected = "Brasil"),
+        selectInput("tabela_ativ", "Atividade",
+          choices = c("Todas" = "todas", setNames(names(ATIVIDADE_LABEL), ATIVIDADE_LABEL)),
+          selected = "todas")
+      )
+    ),
     hr(),
     verbatimTextOutput("debug_dados"),
     hr(),
@@ -217,42 +247,7 @@ ui <- page_sidebar(
     nav_panel("Tabela",
       card(full_screen = TRUE,
         card_header("Dados numéricos"),
-        layout_columns(
-          col_widths = c(4, 8),
-          card(
-            radioButtons("tabela_fonte", "Exibir dados de:",
-              choices = c(
-                "Série Principal"  = "serie",
-                "VAB Macrossetor"  = "macrossetor",
-                "VAB Atividade"    = "atividade"
-              ),
-              selected = "serie"
-            ),
-            conditionalPanel(
-              "input.tabela_fonte === 'serie'",
-              selectInput("tabela_geo",  "Território", choices = GEO_ORDER, selected = "Brasil"),
-              selectInput("tabela_var",  "Variável",
-                choices = setNames(names(VARIAVEL_LABEL), VARIAVEL_LABEL),
-                selected = "pib_nominal")
-            ),
-            conditionalPanel(
-              "input.tabela_fonte === 'macrossetor'",
-              selectInput("tabela_geo_mac", "Território", choices = GEO_ORDER, selected = "Brasil"),
-              selectInput("tabela_mac", "Macrossetor",
-                choices = c("Todos" = "todos", setNames(names(MACRO_LABEL), MACRO_LABEL)),
-                selected = "todos")
-            ),
-            conditionalPanel(
-              "input.tabela_fonte === 'atividade'",
-              selectInput("tabela_geo_ativ", "Território", choices = GEO_ORDER, selected = "Brasil"),
-              selectInput("tabela_ativ", "Atividade",
-                choices = c("Todas" = "todas", setNames(names(ATIVIDADE_LABEL), ATIVIDADE_LABEL)),
-                selected = "todas")
-            )
-          ),
-          DTOutput("tabela_dados")
-        )
-      )
+        DTOutput("tabela_dados"))
     )
   )
 )
