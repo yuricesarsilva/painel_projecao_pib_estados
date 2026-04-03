@@ -241,15 +241,17 @@ ui <- page_sidebar(
         "Fonte: IBGE Contas Regionais (2002–2023). ",
         "Projeções próprias com reconciliação top-down (2024–2031)."),
       tags$div(
-        style = "margin-top: 12px; border-top: 1px solid #e8e8e8; padding-top: 10px;",
+        style = "margin-top: 16px; padding-top: 12px; border-top: 1px solid #e8e8e8;",
         tags$small(
+          tags$span(style = "color: #aaa; display: block; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8em; margin-bottom: 4px;",
+            "Autor"),
           tags$strong(style = "color: #444; display: block;",
             "Yuri Cesar de Lima e Silva"),
-          tags$span(style = "color: #888; display: block; line-height: 1.5;",
+          tags$span(style = "color: #888; display: block; line-height: 1.6;",
             "Analista de Planejamento e Orçamento"),
-          tags$span(style = "color: #888; display: block; line-height: 1.5;",
+          tags$span(style = "color: #888; display: block; line-height: 1.6;",
             "Chefe da Divisão de Estudos e Análises Sociais"),
-          tags$span(style = "color: #888; display: block; line-height: 1.5;",
+          tags$span(style = "color: #888; display: block; line-height: 1.6;",
             "CGEES/SEPLAN-RR")
         )
       )
