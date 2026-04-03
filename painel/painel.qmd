@@ -282,7 +282,7 @@ ui <- page_sidebar(
     tags$div(
       style = "margin-top: 24px; padding-top: 14px; border-top: 1px solid #e0e0e0; text-align: center;",
       tags$a(
-        href = "metodologia.html", target = "_blank",
+        href = "https://yuricesarsilva.github.io/painel_projecao_pib_estados/metodologia.html", target = "_blank",
         style = paste(
           "display: inline-block; font-size: 0.82em; color: #333;",
           "text-decoration: none; border-bottom: 1px solid #aaa;",
