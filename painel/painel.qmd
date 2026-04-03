@@ -96,15 +96,17 @@ COR_HIST  <- "#1F497D"
 COR_PROJ  <- "#C0392B"
 COR_RIBBN <- "#C0392B"
 
-tema_base <- theme_minimal(base_size = 11) +
+tema_base <- theme_minimal(base_size = 14) +
   theme(
-    plot.title       = element_text(face = "bold", size = 12),
-    plot.subtitle    = element_text(colour = "grey40", size = 9),
-    plot.caption     = element_text(colour = "grey55", size = 7),
+    plot.title       = element_text(face = "bold", size = 15),
+    plot.subtitle    = element_text(colour = "grey40", size = 12),
+    plot.caption     = element_text(colour = "grey55", size = 10),
     panel.grid.minor = element_blank(),
     legend.position  = "bottom",
-    strip.text       = element_text(face = "bold", size = 9),
-    axis.text        = element_text(size = 8)
+    legend.text      = element_text(size = 12),
+    strip.text       = element_text(face = "bold", size = 12),
+    axis.text        = element_text(size = 12),
+    axis.title       = element_text(size = 13)
   )
 
 vl <- geom_vline(xintercept = ANO_HIST_FIM + 0.5,
