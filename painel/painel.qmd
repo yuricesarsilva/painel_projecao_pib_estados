@@ -535,18 +535,15 @@ server <- function(input, output, session) {
       )
     }
 
-    # Formatar colunas numéricas no padrão brasileiro
+    # Formatar colunas numéricas no padrão brasileiro (NA → vazio)
     fmt_br <- function(x, dec = 2)
-      formatC(x, format = "f", digits = dec, big.mark = ".", decimal.mark = ",",
-              big.interval = 3L)
+      ifelse(is.na(x), "",
+             formatC(x, format = "f", digits = dec, big.mark = ".", decimal.mark = ",",
+                     big.interval = 3L))
 
     num_cols <- setdiff(names(df)[sapply(df, is.numeric)], "Ano")
     for (col in num_cols)
       df[[col]] <- fmt_br(df[[col]])
-
-    # Substituir "NA" por vazio (histórico não tem IC)
-    for (col in names(df))
-      if (is.character(df[[col]])) df[[col]][df[[col]] == "NA"] <- ""
 
     datatable(df,
       options = list(paging = FALSE, scrollX = TRUE, scrollY = "480px",

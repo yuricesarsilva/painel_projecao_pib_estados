@@ -67,26 +67,47 @@
   background: #333333 !important;
 }
 
+/* ── Variáveis Bootstrap 5: neutraliza verde do flatly ──────── */
+:root {
+  --bs-primary:            #333333 !important;
+  --bs-primary-rgb:        51,51,51 !important;
+  --bs-link-color:         #333333 !important;
+  --bs-link-hover-color:   #000000 !important;
+  --bs-nav-tabs-link-active-color: #111111 !important;
+  --bs-nav-tabs-link-active-border-color: #111111 #111111 #fff !important;
+}
+
 /* ── Abas do painel (navset_card_tab): sem verde ────────────── */
-.nav-tabs .nav-link {
+.nav-tabs .nav-link,
+.card-header-tabs .nav-link {
   color: #666666 !important;
-  border-bottom: 2px solid transparent !important;
 }
 
 .nav-tabs .nav-link.active,
-.nav-tabs .nav-link:focus {
+.card-header-tabs .nav-link.active,
+.nav-tabs .nav-link:focus,
+.card-header-tabs .nav-link:focus {
   color: #111111 !important;
-  border-bottom: 2px solid #111111 !important;
-  background-color: transparent !important;
+  border-color: #cccccc #cccccc #fff !important;
+  background-color: #fff !important;
   font-weight: 600 !important;
 }
 
-.nav-tabs .nav-link:hover {
+.nav-tabs .nav-link:hover,
+.card-header-tabs .nav-link:hover {
   color: #333333 !important;
-  border-bottom: 2px solid #888888 !important;
 }
 
-/* Remove qualquer cor primária (verde flatly) nos links ativos */
+/* Links gerais fora da navbar */
+a:not(.navbar a):not(.paginate_button) {
+  color: #333333 !important;
+}
+
+a:not(.navbar a):not(.paginate_button):hover {
+  color: #000000 !important;
+}
+
+/* ── Nav pills (se usado) ───────────────────────────────────── */
 .nav-pills .nav-link.active,
 .nav-pills .show > .nav-link {
   background-color: #333333 !important;
