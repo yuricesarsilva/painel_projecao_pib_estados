@@ -173,7 +173,28 @@ pib_2023_ref <- pib_nom_hist |>
   filter(ano == ANO_HIST_FIM) |>
   select(geo, pib_lag_base = pib_nominal)
 
-# deflator_pib já está em projecoes_reconciliadas.rds — sem recalcular
+# CI do deflator: propagado de pib_ci e cresc_ci
+# def_lo95 = (pib_lo95 / pib_lag) / (1 + cresc_hi95) - 1
+# def_hi95 = (pib_hi95 / pib_lag) / (1 + cresc_lo95) - 1
+deflator_ci <- proj_rec |>
+  select(geo, ano, pib_nominal, tx_cresc_pib_real) |>
+  left_join(pib_ci,   by = c("geo", "ano")) |>
+  left_join(cresc_ci, by = c("geo", "ano")) |>
+  arrange(geo, ano) |>
+  group_by(geo) |>
+  mutate(pib_lag_proj = lag(pib_nominal)) |>
+  ungroup() |>
+  left_join(pib_2023_ref, by = "geo") |>
+  mutate(
+    pib_lag  = coalesce(pib_lag_proj, pib_lag_base),
+    g_lo_nom = pib_lo95 / pib_lag - 1,
+    g_hi_nom = pib_hi95 / pib_lag - 1,
+    g_lo_vol = coalesce(cresc_lo95, tx_cresc_pib_real),
+    g_hi_vol = coalesce(cresc_hi95, tx_cresc_pib_real),
+    def_lo95 = round(((1 + g_lo_nom) / (1 + g_hi_vol) - 1) * 100, 3),
+    def_hi95 = round(((1 + g_hi_nom) / (1 + g_lo_vol) - 1) * 100, 3)
+  ) |>
+  select(geo, ano, def_lo95, def_hi95)
 
 # ==============================================================================
 # 1. serie_principal.csv
@@ -268,10 +289,11 @@ proj_principal <- bind_rows(
       deflator_anual = deflator_pib / lag(deflator_pib, default = 1) - 1
     ) |>
     ungroup() |>
+    left_join(deflator_ci, by = c("geo", "ano")) |>
     transmute(geo, geo_tipo, regiao, ano,
               variavel = "deflator_pib",
               valor = round(deflator_anual * 100, 3),
-              lo95 = NA_real_, hi95 = NA_real_,
+              lo95 = def_lo95, hi95 = def_hi95,
               tipo = "Projetado")
 )
 
