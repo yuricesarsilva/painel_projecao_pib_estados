@@ -41,7 +41,7 @@ BASE_URL <- "https://yuricesarsilva.github.io/relatorio_projecao_pib_estados/dat
 
 fetch_csv <- function(nome, destino) {
   tryCatch({
-    download.file(paste0(BASE_URL, "/", nome), destino, quiet = TRUE)
+    webr::download(paste0(BASE_URL, "/", nome), destino)
     read.csv(destino, na.strings = "")
   }, error = function(e) e)
 }
