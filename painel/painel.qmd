@@ -22,10 +22,6 @@ execute:
 ```{shinylive-r}
 #| standalone: true
 #| viewerHeight: 850
-#| additional-files:
-#|   - data/serie_principal.csv
-#|   - data/vab_macrossetor.csv
-#|   - data/vab_atividade.csv
 
 library(shiny)
 library(bslib)
@@ -41,33 +37,19 @@ library(scales)
 
 serie_err <- vab_mac_err <- vab_ativ_err <- NULL
 
-# Detecta o caminho correto dos CSVs no filesystem webR
-csv_prefix <- ""
-for (candidate in c("data", ".", "/data", "/home/user/data")) {
-  if (file.exists(file.path(candidate, "serie_principal.csv"))) {
-    csv_prefix <- candidate
-    break
-  }
-}
+BASE_URL <- "https://yuricesarsilva.github.io/relatorio_projecao_pib_estados/data"
 
 serie <- tryCatch(
-  read.csv(file.path(csv_prefix, "serie_principal.csv"), na.strings = ""),
+  read.csv(url(paste0(BASE_URL, "/serie_principal.csv")), na.strings = ""),
   error = function(e) { serie_err <<- conditionMessage(e); NULL }
 )
 vab_mac <- tryCatch(
-  read.csv(file.path(csv_prefix, "vab_macrossetor.csv"), na.strings = ""),
+  read.csv(url(paste0(BASE_URL, "/vab_macrossetor.csv")), na.strings = ""),
   error = function(e) { vab_mac_err <<- conditionMessage(e); NULL }
 )
 vab_ativ <- tryCatch(
-  read.csv(file.path(csv_prefix, "vab_atividade.csv"), na.strings = ""),
+  read.csv(url(paste0(BASE_URL, "/vab_atividade.csv")), na.strings = ""),
   error = function(e) { vab_ativ_err <<- conditionMessage(e); NULL }
-)
-
-# Diagnóstico do filesystem
-fs_info <- paste0(
-  "wd: ", getwd(), "\n",
-  "prefix: '", csv_prefix, "'\n",
-  "files(.): ", paste(list.files(".", recursive = TRUE)[1:10], collapse = ", ")
 )
 
 # ==============================================================================
@@ -299,7 +281,6 @@ server <- function(input, output, session) {
 
   output$debug_dados <- renderText({
     paste0(
-      fs_info, "\n",
       "serie: ",    if (is.null(serie))    paste("ERRO:", serie_err)    else paste(nrow(serie),    "linhas"), "\n",
       "vab_mac: ",  if (is.null(vab_mac))  paste("ERRO:", vab_mac_err)  else paste(nrow(vab_mac),  "linhas"), "\n",
       "vab_ativ: ", if (is.null(vab_ativ)) paste("ERRO:", vab_ativ_err) else paste(nrow(vab_ativ), "linhas")
