@@ -152,17 +152,17 @@ ui <- page_sidebar(
         Shiny.setInputValue("data_load_error", e.toString(), {priority: "event"});
       });
 
-      // Botão sol/lua na navbar
+      // Botão de tema na navbar
       var isDark = false;
       var btn = $(
-        \'<button id="theme-toggle" title="Alternar tema claro/escuro" \' +
+        \'<button id="theme-toggle" \' +
         \'style="background:none;border:none;cursor:pointer;color:#fff;\' +
-        \'font-size:1.25em;line-height:1;padding:0 4px 0 12px;opacity:0.9;">\' +
-        \'&#9728;</button>\'
+        \'font-size:0.85em;letter-spacing:0.04em;padding:0 4px 0 16px;opacity:0.85;">\' +
+        \'Modo escuro</button>\'
       );
       btn.on("click", function() {
         isDark = !isDark;
-        $(this).html(isDark ? "&#9790;" : "&#9728;");
+        $(this).text(isDark ? "Modo claro" : "Modo escuro");
         Shiny.setInputValue("modo_cor", isDark ? "dark" : "light", {priority: "event"});
       });
       $(".navbar").append(btn);
