@@ -23,21 +23,21 @@
 
 ### Ambiente e configuração
 
-- [ ] Adotar `renv`
-- [ ] Criar `renv.lock`
-- [ ] Remover `install.packages()` do pipeline analítico
-- [ ] Ajustar o workflow para restaurar o ambiente
-- [ ] Criar `R/config.R`
-- [ ] Centralizar anos, horizonte, seed e tolerâncias
+- [x] Adotar `renv`
+- [x] Criar `renv.lock`
+- [x] Remover `install.packages()` do pipeline analítico
+- [x] Ajustar o workflow para restaurar o ambiente
+- [x] Criar `R/config.R`
+- [x] Centralizar anos, horizonte, seed e tolerâncias
 
 ### Reprodutibilidade e cache
 
-- [ ] Definir `SEED_GLOBAL` no pipeline
-- [ ] Adicionar logging estruturado da execução
-- [ ] Registrar commit hash, timestamp e hash dos insumos
-- [ ] Criar utilitário de cache com invalidação automática
-- [ ] Salvar metadados do cache junto da seleção de modelos
-- [ ] Validar reutilização correta do cache
+- [x] Definir `SEED_GLOBAL` no pipeline
+- [x] Adicionar logging estruturado da execução
+- [x] Registrar commit hash, timestamp e hash dos insumos
+- [x] Criar utilitário de cache com invalidação automática
+- [x] Salvar metadados do cache junto da seleção de modelos
+- [x] Validar reutilização correta do cache
 
 ---
 
@@ -119,7 +119,7 @@
 ## Status geral
 
 - [x] Bloco 1 concluído
-- [ ] Bloco 2 concluído
+- [x] Bloco 2 concluído
 - [ ] Bloco 3 concluído
 - [ ] Bloco 4 concluído
 - [ ] Bloco 5 concluído

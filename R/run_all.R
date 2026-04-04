@@ -1,4 +1,5 @@
-library(tidyverse)
+source("R/config.R", local = FALSE)
+source("R/utils_logging.R", local = FALSE)
 
 # ==============================================================================
 # run_all.R
@@ -45,9 +46,8 @@ library(tidyverse)
 #      GitHub Pages. Executar 06 após qualquer atualização do pipeline.)
 #
 # Cache do CV (03_projecao.R):
-#   Se dados/selecao_modelos.rds existir, o CV é pulado e os modelos
-#   salvos são reutilizados. IMPORTANTE: deletar o arquivo ao adicionar
-#   novas séries (ex.: novas atividades) para forçar reprocessamento.
+#   A seleção de modelos usa metadata com hashes dos insumos, parâmetros e do
+#   script. O cache é reutilizado apenas quando a assinatura continua válida.
 # ==============================================================================
 
 scripts <- c(
@@ -60,6 +60,24 @@ scripts <- c(
 )
 
 t_total <- proc.time()
+set.seed(SEED_GLOBAL)
+
+inicializar_log_execucao(
+  prefixo = "run_all",
+  contexto = list(
+    branch = obter_git_branch(),
+    commit = obter_git_commit(),
+    seed = SEED_GLOBAL,
+    r_version = R.version.string
+  )
+)
+
+registrar_evento_log(
+  etapa = "run_all",
+  nivel = "INFO",
+  mensagem = "Pipeline iniciado",
+  detalhe = paste(scripts, collapse = " | ")
+)
 
 for (script in scripts) {
   cat("\n", strrep("=", 70), "\n", sep = "")
@@ -67,10 +85,18 @@ for (script in scripts) {
   cat(strrep("=", 70), "\n\n", sep = "")
 
   t0 <- proc.time()
+  registrar_evento_log("run_all", "INFO", "Inicio de script", script)
 
   tryCatch(
     source(script, echo = FALSE, local = FALSE),
     error = function(e) {
+      registrar_evento_log(
+        etapa = "run_all",
+        nivel = "ERROR",
+        mensagem = "Falha na execucao de script",
+        detalhe = paste(script, "-", conditionMessage(e))
+      )
+      salvar_log_execucao(status = "erro")
       cat("\n*** ERRO em", script, "***\n")
       cat(conditionMessage(e), "\n")
       cat("Pipeline interrompido.\n")
@@ -79,8 +105,16 @@ for (script in scripts) {
   )
 
   elapsed <- round((proc.time() - t0)[["elapsed"]])
+  registrar_evento_log(
+    etapa = "run_all",
+    nivel = "INFO",
+    mensagem = "Fim de script",
+    detalhe = paste(script, "-", elapsed, "s")
+  )
   cat("\n[OK]", script, "—", elapsed, "s\n")
 }
+
+salvar_log_execucao(status = "sucesso")
 
 cat("\n", strrep("=", 70), "\n", sep = "")
 cat("Pipeline concluído em",

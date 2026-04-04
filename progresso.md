@@ -414,6 +414,69 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 
 ---
 
+## Etapa 13 â€” Bloco 2 da reforma: infraestrutura obrigatÃ³ria
+
+**O que foi feito:**
+- Inicializado `renv` no projeto, com geraÃ§Ã£o de:
+  - `.Rprofile`
+  - `renv/activate.R`
+  - `renv/settings.json`
+  - `renv.lock`
+- Hidratada a biblioteca do `renv` a partir dos pacotes jÃ¡ disponÃ­veis no ambiente local.
+- Validado o estado do ambiente com `renv::status()`, retornando projeto consistente.
+- Criado `R/config.R` para centralizar:
+  - anos histÃ³ricos e de projeÃ§Ã£o;
+  - horizonte de projeÃ§Ã£o;
+  - `MIN_TRAIN`;
+  - `SEED_GLOBAL`;
+  - versÃ£o-alvo do R;
+  - tolerÃ¢ncias base;
+  - caminhos de log e cache.
+- Criado `R/utils_cache.R` com funÃ§Ãµes de:
+  - hash de arquivo;
+  - hash de objeto R;
+  - criaÃ§Ã£o de metadata de cache;
+  - validaÃ§Ã£o de cache;
+  - gravaÃ§Ã£o do cache com metadata.
+- Criado `R/utils_logging.R` com funÃ§Ãµes para:
+  - identificar branch e commit;
+  - iniciar log estruturado da execuÃ§Ã£o;
+  - registrar eventos;
+  - salvar logs em `output/logs/`.
+
+**AlteraÃ§Ãµes no pipeline:**
+- `R/run_all.R`
+  - passou a carregar `R/config.R` e `R/utils_logging.R`;
+  - define `set.seed(SEED_GLOBAL)` no inÃ­cio;
+  - registra branch, commit, seed e versÃ£o do R;
+  - grava inÃ­cio/fim de cada script e falhas de execuÃ§Ã£o.
+- `R/03_projecao.R`
+  - removeu instalaÃ§Ã£o automÃ¡tica de `prophet`;
+  - passou a usar `R/config.R`, `R/utils_cache.R` e `R/utils_logging.R`;
+  - trocou o cache manual por cache validado por metadata/hashes;
+  - passou a registrar warnings, erros e fallbacks na modelagem final.
+- `R/05_output.R`
+  - removeu instalaÃ§Ãµes em tempo de execuÃ§Ã£o de `openxlsx` e `RColorBrewer`;
+  - passou a usar constantes centralizadas de `R/config.R`.
+- `R/02_consistencia.R`, `R/04_reconciliacao.R` e `R/06_exportar_painel.R`
+  - passaram a carregar `R/config.R`.
+
+**AlteraÃ§Ã£o no workflow:**
+- `.github/workflows/publish-painel.yml`
+  - fixado `R 4.4.0`;
+  - removida instalaÃ§Ã£o manual de pacotes;
+  - adicionada restauraÃ§Ã£o do ambiente com `r-lib/actions/setup-renv@v2`.
+
+**ValidaÃ§Ãµes realizadas:**
+- `renv::status()` â€” projeto consistente.
+- `parse()` de todos os scripts alterados â€” `parse_ok`.
+- teste sintÃ©tico dos utilitÃ¡rios de cache e logging â€” `utils_ok`.
+
+**Arquivos criados:** `.Rprofile`, `renv.lock`, `renv/activate.R`, `renv/settings.json`, `R/config.R`, `R/utils_cache.R`, `R/utils_logging.R`
+**Arquivos modificados:** `R/run_all.R`, `R/02_consistencia.R`, `R/03_projecao.R`, `R/04_reconciliacao.R`, `R/05_output.R`, `R/06_exportar_painel.R`, `.github/workflows/publish-painel.yml`, `checklist_reforma.md`
+
+---
+
 ## Pipeline completo (`run_all.R`)
 
 - Criado `run_all.R` para execução sequencial dos 5 scripts com tratamento de erros e cronometragem por etapa.

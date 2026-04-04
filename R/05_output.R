@@ -1,11 +1,7 @@
+source("R/config.R", local = FALSE)
+
 library(tidyverse)
-
-if (!requireNamespace("openxlsx", quietly = TRUE))
-  install.packages("openxlsx", repos = "https://cloud.r-project.org")
 library(openxlsx)
-
-if (!requireNamespace("RColorBrewer", quietly = TRUE))
-  install.packages("RColorBrewer", repos = "https://cloud.r-project.org")
 library(RColorBrewer)
 
 # ==============================================================================
@@ -74,10 +70,6 @@ library(RColorBrewer)
 # ==============================================================================
 # Parte 0 — Parâmetros e diretórios
 # ==============================================================================
-
-ANO_HIST_INI <- 2002L
-ANO_HIST_FIM <- 2023L
-ANO_PROJ_FIM <- 2031L
 
 GEO_ORDER <- c(
   "Brasil",

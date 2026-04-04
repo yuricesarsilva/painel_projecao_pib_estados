@@ -1,13 +1,9 @@
+source("R/config.R", local = FALSE)
+source("R/utils_cache.R", local = FALSE)
+source("R/utils_logging.R", local = FALSE)
+
 library(tidyverse)
 library(forecast)
-
-# Instalar pacotes ausentes
-for (p in c("prophet")) {
-  if (!requireNamespace(p, quietly = TRUE)) {
-    message("Instalando ", p, "...")
-    install.packages(p, repos = "https://cloud.r-project.org")
-  }
-}
 library(prophet)
 
 # ==============================================================================
@@ -41,9 +37,9 @@ library(prophet)
 #   SSM: StructTS local linear trend (filtro de Kalman via MLE), substitui
 #     BSTS (indisponível para R 4.4.2).
 #
-# Cache: se dados/selecao_modelos.rds existir, o CV é pulado.
-#   IMPORTANTE: deletar o cache ao adicionar novas séries (ex.: séries de
-#   atividade) para que o CV seja refeito para todas as séries.
+# Cache: a seleção de modelos usa metadata com hashes dos insumos, parâmetros
+# e do próprio script. O cache só é reutilizado quando a assinatura continua
+# válida; caso contrário, o CV é recalculado automaticamente.
 #
 # Parte 7 — Derivações contábeis (macrossetores):
 #   VAB nominal macro  = vab_2023 × cumprod(idx_volume × idx_preco)
@@ -73,10 +69,6 @@ library(prophet)
 # Parâmetros globais
 # ==============================================================================
 
-H         <- 8L    # horizonte de projeção (2024–2031)
-ANO_BASE  <- 2002L
-ANO_FIM   <- 2023L
-MIN_TRAIN <- 15L   # mínimo de obs para treino no CV → test a partir de 2017
 
 # ==============================================================================
 # Mapeamento macrossetores → atividades
@@ -100,6 +92,22 @@ ativ_macro <- tibble(
 # ==============================================================================
 # Parte 1 — Preparação dos dados
 # ==============================================================================
+
+fallback_count <- 0L
+
+if (!exists("LOG_EXECUCAO_ID", envir = .GlobalEnv, inherits = FALSE)) {
+  inicializar_log_execucao(
+    prefixo = "03_projecao",
+    contexto = list(
+      branch = obter_git_branch(),
+      commit = obter_git_commit(),
+      seed = SEED_GLOBAL,
+      r_version = R.version.string
+    )
+  )
+}
+
+registrar_evento_log("03_projecao", "INFO", "Carregando dados de projeção")
 
 message("Carregando dados...")
 esp <- readRDS("dados/especiais.rds")
@@ -239,11 +247,45 @@ MODELOS <- list(
   ssm       = function(x, h) forecast(StructTS(x, type = "trend"), h = h)
 )
 
+executar_modelo_com_log <- function(expr, etapa, serie_id, modelo) {
+  avisos <- character()
+
+  resultado <- tryCatch(
+    withCallingHandlers(
+      expr,
+      warning = function(w) {
+        avisos <<- c(avisos, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    ),
+    error = function(e) {
+      registrar_evento_log(
+        etapa = "03_projecao",
+        nivel = "ERROR",
+        mensagem = paste("Erro em", etapa),
+        detalhe = paste("serie_id =", serie_id, "| modelo =", modelo, "|", conditionMessage(e))
+      )
+      structure(list(mensagem = conditionMessage(e)), class = "erro_modelo")
+    }
+  )
+
+  if (length(avisos) > 0) {
+    registrar_evento_log(
+      etapa = "03_projecao",
+      nivel = "WARNING",
+      mensagem = paste("Warning em", etapa),
+      detalhe = paste("serie_id =", serie_id, "| modelo =", modelo, "|", paste(unique(avisos), collapse = " || "))
+    )
+  }
+
+  resultado
+}
+
 # ==============================================================================
 # Parte 3 — Validação cruzada por série (expanding window, h=1)
 # ==============================================================================
 
-cv_erros <- function(ts_obj, modelo_fn) {
+cv_erros <- function(ts_obj, modelo_fn, serie_id, modelo) {
   n      <- length(ts_obj)
   tempos <- time(ts_obj)
   erros  <- rep(NA_real_, n - MIN_TRAIN)
@@ -251,11 +293,17 @@ cv_erros <- function(ts_obj, modelo_fn) {
   for (i in seq(MIN_TRAIN, n - 1L)) {
     treino <- window(ts_obj, end = tempos[i])
     real   <- as.numeric(ts_obj)[i + 1L]
-    tryCatch({
-      fc   <- modelo_fn(treino, 1L)
+    fc <- executar_modelo_com_log(
+      modelo_fn(treino, 1L),
+      etapa = "cv",
+      serie_id = serie_id,
+      modelo = modelo
+    )
+
+    if (!inherits(fc, "erro_modelo")) {
       pred <- as.numeric(fc$mean)[1L]
       erros[i - MIN_TRAIN + 1L] <- real - pred
-    }, error = function(e) NULL, warning = function(w) NULL)
+    }
   }
   erros
 }
@@ -273,15 +321,56 @@ metricas <- function(erros, ts_obj) {
   )
 }
 
+metadata_cache_cv <- criar_metadata_cache(
+  nome = "selecao_modelos",
+  objetos = list(
+    todas_series = todas_series,
+    ids = ids,
+    atividades = ATIVIDADES,
+    macro_map = MACRO_MAP
+  ),
+  arquivos = list(
+    especiais = "dados/especiais.rds",
+    conta_producao = "dados/conta_producao.rds"
+  ),
+  parametros = list(
+    H = H,
+    ANO_BASE = ANO_BASE,
+    ANO_FIM = ANO_FIM,
+    MIN_TRAIN = MIN_TRAIN,
+    modelos = names(MODELOS),
+    cache_schema_version = CACHE_SCHEMA_VERSION
+  ),
+  script_path = "R/03_projecao.R"
+)
+
 # ==============================================================================
 # Parte 4 — Loop de CV com cache
 # ==============================================================================
 
-if (file.exists("dados/selecao_modelos.rds")) {
-  message("Cache encontrado — pulando CV.")
-  selecao_cv <- readRDS("dados/selecao_modelos.rds")
+cache_reutilizado <- cache_valido(
+  CACHE_MODELOS_PATH,
+  CACHE_MODELOS_META_PATH,
+  metadata_cache_cv
+)
+
+if (cache_reutilizado) {
+  message("Cache valido encontrado — pulando CV.")
+  registrar_evento_log(
+    etapa = "03_projecao",
+    nivel = "INFO",
+    mensagem = "Cache valido reutilizado",
+    detalhe = CACHE_MODELOS_PATH
+  )
+  selecao_cv <- readRDS(CACHE_MODELOS_PATH)
 } else {
   message("Iniciando CV: ", length(ids), " séries × ", length(MODELOS), " modelos...")
+  registrar_evento_log(
+    etapa = "03_projecao",
+    nivel = "INFO",
+    mensagem = "Cache invalido ou ausente",
+    detalhe = CACHE_MODELOS_PATH
+  )
 
   resultados_cv <- map_dfr(seq_along(ids), function(i) {
     sid     <- ids[i]
@@ -292,10 +381,7 @@ if (file.exists("dados/selecao_modelos.rds")) {
       message("  [", i, "/", length(ids), "] ", sid)
 
     map_dfr(names(MODELOS), function(nm) {
-      erros <- tryCatch(
-        cv_erros(ts_obj, MODELOS[[nm]]),
-        error = function(e) rep(NA_real_, length(ts_obj) - MIN_TRAIN)
-      )
+      erros <- cv_erros(ts_obj, MODELOS[[nm]], serie_id = sid, modelo = nm)
       metricas(erros, ts_obj) |> mutate(serie_id = sid, modelo = nm)
     })
   })
@@ -316,7 +402,12 @@ if (file.exists("dados/selecao_modelos.rds")) {
 
   selecao_cv <- melhor |> left_join(todas_metricas_wide, by = "serie_id")
 
-  saveRDS(selecao_cv, "dados/selecao_modelos.rds")
+  salvar_cache_com_metadata(
+    obj = selecao_cv,
+    cache_path = CACHE_MODELOS_PATH,
+    meta_path = CACHE_MODELOS_META_PATH,
+    metadata_atual = metadata_cache_cv
+  )
   message("CV concluído.")
 }
 
@@ -347,14 +438,34 @@ projecoes_brutas <- map_dfr(ids, function(sid) {
 
   if (length(modelo_nm) == 0 || is.na(modelo_nm)) modelo_nm <- "arima"
 
-  fc <- tryCatch(
+  fc <- executar_modelo_com_log(
     MODELOS_FINAL[[modelo_nm]](ts_obj, H),
-    error = function(e) {
-      message("  Fallback ARIMA para: ", sid)
-      modelo_nm <<- "arima"
-      MODELOS_FINAL$arima(ts_obj, H)
-    }
+    etapa = "projecao_final",
+    serie_id = sid,
+    modelo = modelo_nm
   )
+
+  if (inherits(fc, "erro_modelo")) {
+    message("  Fallback ARIMA para: ", sid)
+    fallback_count <- fallback_count + 1L
+    registrar_evento_log(
+      etapa = "03_projecao",
+      nivel = "WARNING",
+      mensagem = "Fallback para ARIMA",
+      detalhe = paste("serie_id =", sid, "| modelo_original =", modelo_nm)
+    )
+    modelo_nm <- "arima"
+    fc <- executar_modelo_com_log(
+      MODELOS_FINAL$arima(ts_obj, H),
+      etapa = "fallback_arima",
+      serie_id = sid,
+      modelo = modelo_nm
+    )
+  }
+
+  if (inherits(fc, "erro_modelo")) {
+    stop("Falha definitiva na projeção final da série: ", sid)
+  }
 
   parametros_str <- tryCatch(
     if (!is.null(fc$method)) as.character(fc$method) else toupper(modelo_nm),
@@ -587,5 +698,16 @@ projecoes_derivadas |>
          `Cresc real (%)` = tx_cresc_pib_real,
          `Deflator (%)` = deflator_pib) |>
   print(n = 20)
+
+registrar_evento_log(
+  etapa = "03_projecao",
+  nivel = "INFO",
+  mensagem = "Resumo da modelagem",
+  detalhe = paste(
+    "series =", length(ids),
+    "| cache =", if (cache_reutilizado) "reutilizado" else "recalculado",
+    "| fallbacks =", fallback_count
+  )
+)
 
 message("\n03_projecao.R concluído.")

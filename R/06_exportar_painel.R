@@ -1,3 +1,5 @@
+source("R/config.R", local = FALSE)
+
 library(tidyverse)
 
 # ==============================================================================
@@ -22,9 +24,6 @@ library(tidyverse)
 #   tipo = "Histórico" (2002–2023) ou "Projetado" (2024–2031)
 #   lo95/hi95 = NA no período histórico
 # ==============================================================================
-
-ANO_HIST_INI <- 2002L
-ANO_HIST_FIM <- 2023L
 
 dir.create("painel/data", recursive = TRUE, showWarnings = FALSE)
 
