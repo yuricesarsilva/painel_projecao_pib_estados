@@ -630,3 +630,5 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
   - `library(S7)` para empacotamento no `shinylive`;
   - coluna `horizonte` restrita ao fluxo das tabelas.
 - A faixa visual do horizonte exploratorio e os helpers extras dos graficos foram retirados temporariamente desta branch para isolar a regressao sem tocar na `main`.
+- Como o erro `object must be an <S7_object>, not a <NULL>` persistiu mesmo apos aproximar o baseline da `main`, foi aplicada uma correcao minima apenas nos dois pontos em que ainda havia adicao condicional de camada no `ggplot`.
+- Criada `camada_base_100()` para retornar sempre um objeto valido (`geom_hline()` ou `geom_blank()`), evitando que o preview local do `shinylive` receba `NULL` ao compor os graficos de serie historica e comparativo.

@@ -117,6 +117,21 @@ vl <- geom_vline(xintercept = ANO_HIST_FIM + 0.5,
 
 eh_indice <- function(var) var %in% c("idx_vol_pib", "idx_deflator")
 
+camada_base_100 <- function(var) {
+  if (eh_indice(var)) {
+    return(
+      geom_hline(
+        yintercept = 100,
+        colour = "grey70",
+        linewidth = 0.3,
+        linetype = "dotted"
+      )
+    )
+  }
+
+  geom_blank()
+}
+
 formato_y <- function(var) {
   if (eh_indice(var))
     scale_y_continuous(labels = label_number(accuracy = 0.1, decimal.mark = ",",
@@ -429,9 +444,7 @@ server <- function(input, output, session) {
         fill = COR_RIBBN, alpha = 0.20
       ) +
       vl +
-      { if (eh_indice(input$variavel))
-          geom_hline(yintercept = 100, colour = "grey70",
-                     linewidth = 0.3, linetype = "dotted") } +
+      camada_base_100(input$variavel) +
       geom_line(aes(y = valor, colour = tipo), linewidth = 1.1) +
       geom_point(aes(y = valor, colour = tipo), size = 2.0) +
       scale_colour_manual(
@@ -569,9 +582,7 @@ server <- function(input, output, session) {
 
     ggplot(df, aes(x = ano, y = valor, colour = geo, linetype = tipo)) +
       vl +
-      { if (eh_indice(input$variavel))
-          geom_hline(yintercept = 100, colour = "grey70",
-                     linewidth = 0.3, linetype = "dotted") } +
+      camada_base_100(input$variavel) +
       geom_line(linewidth = 0.9) +
       scale_linetype_manual(values = c(Histórico = "solid", Projetado = "dashed"), name = NULL) +
       scale_colour_brewer(palette = "Set2", name = NULL) +
