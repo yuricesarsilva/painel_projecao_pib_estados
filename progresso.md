@@ -616,3 +616,7 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - Adicionado `showNotification()` no server para exibir a causa textual quando a carga dos CSVs falhar no navegador, substituindo mensagens opacas como `[object Object]`.
 - Ajustadas as camadas opcionais dos graficos em `painel/painel.qmd` para retornarem listas vazias em vez de `NULL`.
 - Isso corrige o erro `object must be an <S7_object>, not a <NULL>` no `ggplot2` rodando via `shinylive`, que impedia a renderizacao dos graficos mesmo com as tabelas carregadas.
+- Revisada a estrategia dos graficos do preview local:
+  - removida a abordagem anterior baseada em adicionar listas de camadas ao `ggplot`;
+  - adotada montagem explicita do objeto `plot`, com inclusao condicional das camadas opcionais apenas quando elas existem.
+- Isso evita inserir `NULL` ou estruturas intermediarias no operador `+` do `ggplot2`/`S7`, reduzindo o risco de erro no runtime WebAssembly.
