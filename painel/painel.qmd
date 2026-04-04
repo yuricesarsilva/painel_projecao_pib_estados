@@ -39,8 +39,6 @@ library(scales)
 
 ANO_HIST_FIM <- 2023L
 ANO_PROJ_FIM <- 2031L
-ANO_OPERACIONAL_FIM <- 2027L
-ANO_EXPLORATORIO_INI <- 2028L
 
 GEO_ORDER <- c(
   "Brasil",
@@ -118,55 +116,6 @@ vl <- geom_vline(xintercept = ANO_HIST_FIM + 0.5,
                  linetype = "dashed", colour = "grey55", linewidth = 0.4)
 
 eh_indice <- function(var) var %in% c("idx_vol_pib", "idx_deflator")
-
-camada_exploratoria <- function(ano_limite) {
-  if (ano_limite < ANO_EXPLORATORIO_INI) {
-    return(NULL)
-  }
-
-  annotate(
-    "rect",
-    xmin = ANO_EXPLORATORIO_INI - 0.5,
-    xmax = ano_limite + 0.5,
-    ymin = -Inf,
-    ymax = Inf,
-    fill = "#7f8c8d",
-    alpha = 0.08
-  )
-}
-
-adiciona_camada_exploratoria <- function(plot, ano_limite) {
-  camada <- camada_exploratoria(ano_limite)
-  if (is.null(camada)) {
-    return(plot)
-  }
-
-  plot + camada
-}
-
-adiciona_base_100 <- function(plot, var) {
-  if (!eh_indice(var)) {
-    return(plot)
-  }
-
-  plot + geom_hline(
-    yintercept = 100,
-    colour = "grey70",
-    linewidth = 0.3,
-    linetype = "dotted"
-  )
-}
-
-nota_horizonte <- function(ano_limite = ANO_PROJ_FIM) {
-  if (ano_limite < ANO_EXPLORATORIO_INI) {
-    return(paste0("Horizonte operacional: 2024–", ano_limite, "."))
-  }
-
-  paste0(
-    "Horizonte operacional: 2024–", ANO_OPERACIONAL_FIM,
-    "; horizonte exploratório: ", ANO_EXPLORATORIO_INI, "–", ano_limite, "."
-  )
-}
 
 formato_y <- function(var) {
   if (eh_indice(var))
@@ -473,13 +422,16 @@ server <- function(input, output, session) {
                         " + Projeção ", ANO_HIST_FIM + 1L, "–", ano_max(),
                         " com IC 95% | ", nota_horizonte(ano_max()))
 
-    plot <- ggplot(df, aes(x = ano)) +
+    ggplot(df, aes(x = ano)) +
       geom_ribbon(
         aes(ymin = lo95, ymax = hi95),
         data = \(d) filter(d, tipo == "Projetado", !is.na(lo95)),
         fill = COR_RIBBN, alpha = 0.20
       ) +
       vl +
+      { if (eh_indice(input$variavel))
+          geom_hline(yintercept = 100, colour = "grey70",
+                     linewidth = 0.3, linetype = "dotted") } +
       geom_line(aes(y = valor, colour = tipo), linewidth = 1.1) +
       geom_point(aes(y = valor, colour = tipo), size = 2.0) +
       scale_colour_manual(
@@ -488,14 +440,12 @@ server <- function(input, output, session) {
       scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
       formato_y(input$variavel) +
       labs(title    = paste0(VARIAVEL_LABEL[input$variavel], " — ", input$geo),
-           subtitle = subtitulo,
+           subtitle = paste0("Histórico 2002–", ANO_HIST_FIM,
+                             " + Projeção ", ANO_HIST_FIM + 1L, "–", ano_max(),
+                             " com IC 95%"),
            x = NULL, y = unidade,
-           caption = "Fonte: IBGE (histórico); projeção própria. Faixa cinza = horizonte exploratório.") +
+           caption = "Fonte: IBGE (histórico); projeção própria (2024–2031).") +
       tema_base
-
-    plot <- adiciona_camada_exploratoria(plot, ano_max())
-    plot <- adiciona_base_100(plot, input$variavel)
-    plot
   })
 
   # ---- Aba 2: VAB Macrossetor -----------------------------------------------
@@ -513,7 +463,7 @@ server <- function(input, output, session) {
     validate(need(nrow(df) > 0, "Sem dados para o macrossetor selecionado."))
 
     if (input$macrossetor == "todos") {
-      plot <- ggplot(df, aes(x = ano, fill = mac_label, colour = mac_label)) +
+      ggplot(df, aes(x = ano, fill = mac_label, colour = mac_label)) +
         geom_area(data = \(d) filter(d, tipo == "Histórico"),
                   aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.70) +
         geom_area(data = \(d) filter(d, tipo == "Projetado"),
@@ -525,15 +475,12 @@ server <- function(input, output, session) {
         scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                   accuracy = 1, suffix = " bi", scale = 1)) +
         labs(title    = paste0("VAB por Macrossetor — ", input$geo),
-             subtitle = paste0("R$ bilhões (correntes) | empilhado; sombreado = projetado | ", nota_horizonte(ano_max())),
+             subtitle = "R$ bilhões (correntes) | empilhado; sombreado = projetado",
              x = NULL, y = "R$ bilhões",
-             caption = "Fonte: IBGE (histórico); projeção própria. Faixa cinza = horizonte exploratório.") +
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
         tema_base
-
-      plot <- adiciona_camada_exploratoria(plot, ano_max())
-      plot
     } else {
-      plot <- ggplot(df, aes(x = ano)) +
+      ggplot(df, aes(x = ano)) +
         geom_ribbon(aes(ymin = vab_lo95 / 1e3, ymax = vab_hi95 / 1e3),
                     data = \(d) filter(d, tipo == "Projetado", !is.na(vab_lo95)),
                     fill = COR_RIBBN, alpha = 0.20) +
@@ -545,13 +492,10 @@ server <- function(input, output, session) {
         scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                   accuracy = 0.1, suffix = " bi")) +
         labs(title    = paste0("VAB — ", MACRO_LABEL[input$macrossetor], " — ", input$geo),
-             subtitle = paste0("R$ bilhões (correntes) | IC 95% no período projetado | ", nota_horizonte(ano_max())),
+             subtitle = "R$ bilhões (correntes) | IC 95% no período projetado",
              x = NULL, y = "R$ bilhões",
-             caption = "Fonte: IBGE (histórico); projeção própria. Faixa cinza = horizonte exploratório.") +
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
         tema_base
-
-      plot <- adiciona_camada_exploratoria(plot, ano_max())
-      plot
     }
   })
 
@@ -570,7 +514,7 @@ server <- function(input, output, session) {
     validate(need(nrow(df) > 0, "Sem dados para a atividade selecionada."))
 
     if (input$atividade == "todas") {
-      plot <- ggplot(df, aes(x = ano, fill = ativ_label, colour = ativ_label)) +
+      ggplot(df, aes(x = ano, fill = ativ_label, colour = ativ_label)) +
         geom_area(data = \(d) filter(d, tipo == "Histórico"),
                   aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.80) +
         geom_area(data = \(d) filter(d, tipo == "Projetado"),
@@ -582,16 +526,13 @@ server <- function(input, output, session) {
         scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                   accuracy = 1, suffix = " bi", scale = 1)) +
         labs(title    = paste0("VAB por Atividade — ", input$geo),
-             subtitle = paste0("R$ bilhões (correntes) | empilhado; sombreado = projetado | ", nota_horizonte(ano_max())),
+             subtitle = "R$ bilhões (correntes) | empilhado; sombreado = projetado",
              x = NULL, y = "R$ bilhões",
-             caption = "Fonte: IBGE (histórico); projeção própria. Faixa cinza = horizonte exploratório.") +
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
         tema_base +
         theme(legend.text = element_text(size = 7), legend.key.size = unit(0.4, "cm"))
-
-      plot <- adiciona_camada_exploratoria(plot, ano_max())
-      plot
     } else {
-      plot <- ggplot(df, aes(x = ano)) +
+      ggplot(df, aes(x = ano)) +
         geom_ribbon(aes(ymin = vab_lo95 / 1e3, ymax = vab_hi95 / 1e3),
                     data = \(d) filter(d, tipo == "Projetado", !is.na(vab_lo95)),
                     fill = COR_RIBBN, alpha = 0.20) +
@@ -603,13 +544,10 @@ server <- function(input, output, session) {
         scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                   accuracy = 0.1, suffix = " bi")) +
         labs(title    = paste0("VAB — ", ATIVIDADE_LABEL[input$atividade], " — ", input$geo),
-             subtitle = paste0("R$ bilhões (correntes) | IC 95% no período projetado | ", nota_horizonte(ano_max())),
+             subtitle = "R$ bilhões (correntes) | IC 95% no período projetado",
              x = NULL, y = "R$ bilhões",
-             caption = "Fonte: IBGE (histórico); projeção própria. Faixa cinza = horizonte exploratório.") +
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
         tema_base
-
-      plot <- adiciona_camada_exploratoria(plot, ano_max())
-      plot
     }
   })
 
@@ -629,8 +567,11 @@ server <- function(input, output, session) {
 
     unidade <- if (eh_indice(input$variavel)) "Índice (2002 = 100)" else "R$ bilhões"
 
-    plot <- ggplot(df, aes(x = ano, y = valor, colour = geo, linetype = tipo)) +
+    ggplot(df, aes(x = ano, y = valor, colour = geo, linetype = tipo)) +
       vl +
+      { if (eh_indice(input$variavel))
+          geom_hline(yintercept = 100, colour = "grey70",
+                     linewidth = 0.3, linetype = "dotted") } +
       geom_line(linewidth = 0.9) +
       scale_linetype_manual(values = c(Histórico = "solid", Projetado = "dashed"), name = NULL) +
       scale_colour_brewer(palette = "Set2", name = NULL) +
@@ -644,14 +585,10 @@ server <- function(input, output, session) {
       labs(title    = paste0(VARIAVEL_LABEL[input$variavel], " — Comparativo"),
            subtitle = paste0("Histórico 2002–", ANO_HIST_FIM,
                              " (contínuo) + Projeção ", ANO_HIST_FIM + 1L, "–", ano_max(),
-                             " (tracejado) | ", nota_horizonte(ano_max())),
+                             " (tracejado)"),
            x = NULL, y = unidade,
-           caption = "Fonte: IBGE (histórico); projeção própria. Faixa cinza = horizonte exploratório.") +
+           caption = "Fonte: IBGE (histórico); projeção própria.") +
       tema_base
-
-    plot <- adiciona_camada_exploratoria(plot, ano_max())
-    plot <- adiciona_base_100(plot, input$variavel)
-    plot
   })
 
   # ---- Aba 5: Tabela --------------------------------------------------------

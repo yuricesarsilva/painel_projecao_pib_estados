@@ -620,3 +620,13 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
   - removida a abordagem anterior baseada em adicionar listas de camadas ao `ggplot`;
   - adotada montagem explicita do objeto `plot`, com inclusao condicional das camadas opcionais apenas quando elas existem.
 - Isso evita inserir `NULL` ou estruturas intermediarias no operador `+` do `ggplot2`/`S7`, reduzindo o risco de erro no runtime WebAssembly.
+- Comparado `painel/painel.qmd` da branch de reforma com `origin/main` sem alterar a branch principal.
+- Revertida, na branch de reforma, a parte dos graficos para ficar o mais proxima possivel da versao funcional da `main`.
+- Mantidas apenas as adaptacoes necessarias ao preview local:
+  - `embed-resources: false`;
+  - `BASE_URL = "../data"`;
+  - link `../metodologia.html`;
+  - notificacao de erro para carga dos CSVs;
+  - `library(S7)` para empacotamento no `shinylive`;
+  - coluna `horizonte` restrita ao fluxo das tabelas.
+- A faixa visual do horizonte exploratorio e os helpers extras dos graficos foram retirados temporariamente desta branch para isolar a regressao sem tocar na `main`.
