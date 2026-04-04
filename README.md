@@ -144,6 +144,12 @@ Ou, no Windows, use o atalho do projeto:
 .\preview_painel.ps1
 ```
 
+Ou, se preferir via R:
+
+```bash
+Rscript preview_painel.R
+```
+
 Se quiser apenas gerar o HTML localmente, sem abrir servidor de preview:
 
 ```bash

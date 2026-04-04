@@ -582,5 +582,6 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 
 **Ajuste complementar:**
 - Criados `preview_painel.ps1` e `render_painel.ps1` para abrir preview e renderizar o painel usando automaticamente o `.Rprofile` da raiz do projeto.
+- Criado `preview_painel.R` para permitir a abertura do preview tambÃ©m via `Rscript`, sem depender de PowerShell.
 
-**Arquivos modificados:** `renv.lock`, `painel/.Rprofile`, `README.md`, `checklist_reforma.md`, `preview_painel.ps1`, `render_painel.ps1`
+**Arquivos modificados:** `renv.lock`, `painel/.Rprofile`, `README.md`, `checklist_reforma.md`, `preview_painel.ps1`, `render_painel.ps1`, `preview_painel.R`
