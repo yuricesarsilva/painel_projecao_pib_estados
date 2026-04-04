@@ -596,3 +596,7 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 **Correcao adicional do ambiente do Quarto:**
 - Ajustados `preview_painel.R`, `preview_painel.ps1` e `render_painel.ps1` para forcar tambem `R_HOME` e o `PATH` do R 4.4.0.
 - Isso aumenta a chance de o Quarto chamar o mesmo `Rscript` que enxerga o `shinylive` instalado no projeto.
+
+**Correcao da raiz do projeto para preview:**
+- Ajustado `.Rprofile` da raiz para carregar `renv/activate.R` a partir de `RENV_PROJECT` quando essa variavel estiver definida.
+- Isso evita falha quando o Quarto ou o `Rscript` executam em subdiretorios como `painel/`.
