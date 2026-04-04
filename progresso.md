@@ -553,3 +553,25 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - [x] `R/04_reconciliacao.R` — garantir restrições de agregação nas projeções
 - [x] `R/05_output.R` — gerar tabelas e gráficos de resultado
 - [x] `run_all.R` — orquestrador do pipeline completo
+
+---
+
+## Etapa 15 — Preview local mínimo após o Bloco 3
+
+**Objetivo:**
+- manter a base exatamente no estado pós-Bloco 3 da reforma e adicionar apenas o mínimo necessário para inspecionar o painel localmente.
+
+**O que foi feito:**
+- criada a branch `preview-local-minimo` a partir do commit `6f88613` (`Qualifica: torna o QA bloqueante e separa horizonte operacional`);
+- criado `preview_painel_local.R`, que:
+  - extrai o bloco `shinylive-r` de `painel/painel.qmd`;
+  - substitui apenas em memória as URLs publicadas por recursos locais (`/data` e `/metodologia/metodologia.html`);
+  - sobe o app com `shiny::runApp()` sem alterar `painel/painel.qmd`;
+- criado `preview_painel_local.ps1` para facilitar a execução no Windows usando o `Rscript.exe` do R 4.4.0;
+- atualizado `README.md` com as instruções de uso do preview local mínimo.
+
+**Arquivos criados:** `preview_painel_local.R`, `preview_painel_local.ps1`
+**Arquivos modificados:** `README.md`
+
+**Resultado prático:**
+- o painel pode ser inspecionado localmente nesta branch sem depender do GitHub Pages e sem introduzir mudanças estruturais no arquivo `painel/painel.qmd`.

@@ -153,6 +153,22 @@ git commit -m "Atualiza dados do painel"
 git push origin main
 ```
 
+### Preview local mínimo do painel
+
+Sem alterar `painel/painel.qmd`, é possível abrir um preview local nativo do app com:
+
+```powershell
+.\preview_painel_local.ps1
+```
+
+Ou, se preferir chamar o R diretamente:
+
+```powershell
+& "C:\Program Files\R\R-4.4.0\bin\Rscript.exe" .\preview_painel_local.R
+```
+
+Esse helper reaproveita o bloco `shinylive-r` de `painel/painel.qmd`, mas serve `painel/data/` e `painel/metodologia.html` localmente via `shiny`, sem modificar o arquivo do painel.
+
 ---
 
 ## Outputs Gerados
