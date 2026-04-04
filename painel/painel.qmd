@@ -298,11 +298,6 @@ ui <- page_sidebar(
       )
     ),
     tags$div(
-      style = "margin-top: 18px; padding: 10px 12px; background: #f7f7f7; border-left: 3px solid #7f8c8d; font-size: 0.82em; line-height: 1.45; color: #333;",
-      tags$strong("Leitura recomendada: "),
-      "2024–2027 = horizonte operacional; 2028–2031 = horizonte exploratório, com maior incerteza interpretativa."
-    ),
-    tags$div(
       style = "margin-top: 24px; padding-top: 14px; border-top: 1px solid #e0e0e0; text-align: center;",
       tags$a(
         href = "../metodologia.html", target = "_blank",
@@ -417,10 +412,7 @@ server <- function(input, output, session) {
     serie() |>
       filter(geo == input$geo, variavel == input$variavel,
              ano <= ano_max()) |>
-      mutate(
-        tipo = factor(tipo, levels = c("Histórico", "Projetado")),
-        horizonte = factor(horizonte, levels = c("Histórico", "Operacional", "Exploratório"))
-      )
+      mutate(tipo = factor(tipo, levels = c("Histórico", "Projetado")))
   })
 
   # ---- Aba 1: Série Histórica + Projeção ------------------------------------
