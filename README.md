@@ -150,6 +150,12 @@ Ou, se preferir via R:
 Rscript preview_painel.R
 ```
 
+Se o preview via `shinylive` apresentar incompatibilidades no navegador local, use o modo de preview em R nativo:
+
+```bash
+Rscript preview_painel_local.R
+```
+
 Se quiser apenas gerar o HTML localmente, sem abrir servidor de preview:
 
 ```bash

@@ -649,3 +649,9 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - Como o erro persistiu, iniciado teste de diagnostico estrutural no `plot_serie`.
 - O grafico da aba inicial foi reduzido temporariamente ao menor `ggplot` possivel com os proprios dados (`geom_line` + `geom_point`, sem ribbon, escalas manuais, `labs()` ou `theme` customizado).
 - Objetivo: verificar se a falha esta na montagem do grafico original ou no runtime do `ggplot2`/`shinylive` em si.
+- Como o erro persistiu ate no `ggplot` minimo, foi criada uma rota alternativa de preview local fora do `shinylive`.
+- Criado `preview_painel_local.R`, que:
+  - extrai o bloco `shinylive-r` de `painel/painel.qmd`;
+  - ajusta os caminhos para `data/` e `metodologia.html` no modo local;
+  - monta o app em memoria e executa com `shiny::runApp()`.
+- Atualizado `README.md` com a instrucao de uso `Rscript preview_painel_local.R` para preview local estavel em R nativo.
