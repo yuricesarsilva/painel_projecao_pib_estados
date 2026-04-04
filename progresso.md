@@ -379,6 +379,41 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 
 ---
 
+## Etapa 12 â€” Bloco 1 da reforma: preservaÃ§Ã£o e baseline
+
+**O que foi feito:**
+- Criada a tag `v1.0-painel-atual` como ponto de restauraÃ§Ã£o da versÃ£o anterior Ã  reforma.
+- Criada a branch `reforma-pipeline-univariado` para concentrar a execuÃ§Ã£o da reforma fora da linha principal.
+- Criado `baseline_reforma.md` para documentar o baseline preservado, incluindo:
+  - commit de referÃªncia;
+  - comandos de restauraÃ§Ã£o;
+  - descriÃ§Ã£o funcional do estado atual;
+  - inventÃ¡rio dos CSVs versionados do painel com linhas e hashes SHA-256.
+- Atualizado `checklist_reforma.md`, marcando o **Bloco 1** como concluÃ­do.
+- Atualizado `CLAUDE.md` para incluir a regra permanente de manter `checklist_reforma.md`
+  sincronizado sempre que a alteraÃ§Ã£o fizer parte da reforma.
+
+**Arquivos criados:** `baseline_reforma.md`
+**Arquivos modificados:** `CLAUDE.md`, `checklist_reforma.md`
+
+**Baseline preservado:**
+
+| ReferÃªncia | Valor |
+|-----------|-------|
+| Commit-base | `cb2b4b675eefc7cd9223211897de14e13e3377fa` |
+| Tag | `v1.0-painel-atual` |
+| Branch de reforma | `reforma-pipeline-univariado` |
+
+**CSVs preservados do painel:**
+
+| Arquivo | Linhas |
+|---------|--------|
+| `painel/data/serie_principal.csv` | 4.950 |
+| `painel/data/vab_macrossetor.csv` | 3.960 |
+| `painel/data/vab_atividade.csv` | 11.880 |
+
+---
+
 ## Pipeline completo (`run_all.R`)
 
 - Criado `run_all.R` para execução sequencial dos 5 scripts com tratamento de erros e cronometragem por etapa.

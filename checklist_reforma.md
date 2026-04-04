@@ -11,11 +11,11 @@
 
 ## Bloco 1 - Preservação e baseline
 
-- [ ] Criar branch de trabalho da reforma
-- [ ] Criar tag da versão atual
-- [ ] Registrar quais outputs atuais serão a referência da reforma
-- [ ] Preservar os CSVs atuais de `painel/data/`
-- [ ] Confirmar que a versão atual pode ser restaurada integralmente
+- [x] Criar branch de trabalho da reforma
+- [x] Criar tag da versão atual
+- [x] Registrar quais outputs atuais serão a referência da reforma
+- [x] Preservar os CSVs atuais de `painel/data/`
+- [x] Confirmar que a versão atual pode ser restaurada integralmente
 
 ---
 
@@ -118,7 +118,7 @@
 
 ## Status geral
 
-- [ ] Bloco 1 concluído
+- [x] Bloco 1 concluído
 - [ ] Bloco 2 concluído
 - [ ] Bloco 3 concluído
 - [ ] Bloco 4 concluído
