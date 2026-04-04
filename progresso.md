@@ -604,3 +604,7 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 **Correcao do render do Shinylive no preview:**
 - Ajustado `painel/painel.qmd` para definir `embed-resources: false` no formato dashboard.
 - Isso evita que o Quarto gere um HTML auto-contido incompatível com a execução do `shinylive` no preview local.
+
+**Correcao de dependencias do preview:**
+- Instalado `DT` no ambiente `renv` do projeto para atender a dependencia usada por `painel/painel.qmd`.
+- O lockfile permaneceu atualizado apos a instalacao.
