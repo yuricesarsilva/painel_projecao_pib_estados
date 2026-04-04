@@ -655,3 +655,5 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
   - ajusta os caminhos para `data/` e `metodologia.html` no modo local;
   - monta o app em memoria e executa com `shiny::runApp()`.
 - Atualizado `README.md` com a instrucao de uso `Rscript preview_painel_local.R` para preview local estavel em R nativo.
+- Instalado `shiny` no ambiente `renv` do projeto para viabilizar a execucao do `preview_painel_local.R`.
+- O `renv.lock` foi atualizado com as dependencias de runtime do preview nativo (`shiny`, `httpuv`, `commonmark`, `sourcetools`, `xtable` e dependencias resolvidas pelo snapshot).
