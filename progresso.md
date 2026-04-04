@@ -585,3 +585,7 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - Criado `preview_painel.R` para permitir a abertura do preview tambÃ©m via `Rscript`, sem depender de PowerShell.
 
 **Arquivos modificados:** `renv.lock`, `painel/.Rprofile`, `README.md`, `checklist_reforma.md`, `preview_painel.ps1`, `render_painel.ps1`, `preview_painel.R`
+
+**Correcao complementar do ambiente:**
+- Ajustados `preview_painel.R`, `preview_painel.ps1` e `render_painel.ps1` para repassar explicitamente `R_PROFILE_USER`, `R_LIBS_USER` e `RENV_PROJECT` ao Quarto.
+- Isso evita que o `Rscript` interno do filtro `shinylive` rode fora da biblioteca do `renv`.
