@@ -156,7 +156,7 @@ formato_y <- function(var) {
                                              suffix = " bi"))
 }
 
-BASE_URL <- "data"
+BASE_URL <- "../data"
 
 # ==============================================================================
 # UI
@@ -223,7 +223,8 @@ ui <- page_sidebar(
         Shiny.setInputValue("vab_mac_raw",  results[1], {priority: "event"});
         Shiny.setInputValue("vab_ativ_raw", results[2], {priority: "event"});
       }).catch(function(e) {
-        Shiny.setInputValue("data_load_error", e.toString(), {priority: "event"});
+        var msg = (e && e.message) ? e.message : String(e);
+        Shiny.setInputValue("data_load_error", msg, {priority: "event"});
       });
 
       // Botão de tema na navbar
@@ -318,7 +319,7 @@ ui <- page_sidebar(
     tags$div(
       style = "margin-top: 24px; padding-top: 14px; border-top: 1px solid #e0e0e0; text-align: center;",
       tags$a(
-        href = "metodologia.html", target = "_blank",
+        href = "../metodologia.html", target = "_blank",
         style = paste(
           "display: inline-block; font-size: 0.82em; color: #333;",
           "text-decoration: none; border-bottom: 1px solid #aaa;",
@@ -389,6 +390,14 @@ ui <- page_sidebar(
 # ==============================================================================
 
 server <- function(input, output, session) {
+
+  observeEvent(input$data_load_error, {
+    showNotification(
+      paste("Falha ao carregar os dados do painel:", input$data_load_error),
+      type = "error",
+      duration = NULL
+    )
+  })
 
   # Tema dia/noite
   observe({

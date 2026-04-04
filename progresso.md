@@ -611,3 +611,6 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - Instalado `S7` no ambiente `renv` do projeto para atender a dependencia exigida por `ggplot2` no runtime do `shinylive`.
 - Ajustado `painel/painel.qmd` para carregar `library(S7)` explicitamente no bloco `shinylive-r`.
 - Isso forca o empacotamento de `S7` na build WebAssembly do preview local, evitando tela branca causada pela falha de inicializacao do `ggplot2` no navegador.
+- Ajustados os caminhos do preview local de `data` para `../data` e de `metodologia.html` para `../metodologia.html`.
+- Isso corrige a resolucao de recursos quando o app `shinylive` roda dentro da rota `app_*`, evitando que os fetchs dos CSVs apontem para um caminho inexistente.
+- Adicionado `showNotification()` no server para exibir a causa textual quando a carga dos CSVs falhar no navegador, substituindo mensagens opacas como `[object Object]`.
