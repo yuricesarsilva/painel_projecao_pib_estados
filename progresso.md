@@ -641,3 +641,8 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - Adicionada instrumentacao de diagnostico nos `renderPlot()` do painel.
 - Cada grafico agora captura erros localmente, emite `showNotification()` com o nome do plot que falhou e renderiza um placeholder com a mensagem exata.
 - Isso transforma o erro generico do `shinylive` em diagnostico acionavel por aba (`plot_serie`, `plot_macro`, `plot_ativ`, `plot_comp`), permitindo localizar a regressao real sem tocar na `main`.
+- O diagnostico mostrou que os quatro plots falham com a mesma mensagem: ``object` must be an <S7_object>, not a <NULL>``.
+- Aplicada correcao comum aos quatro graficos em `painel/painel.qmd`:
+  - substituidos `name = NULL` nas escalas por `name = ""`;
+  - substituidos `x = NULL` nos `labs()` por `x = ""`.
+- Isso remove `NULL` do caminho compartilhado de montagem dos objetos `ggplot`, para testar se a incompatibilidade esta no tratamento de `NULL` pelo `ggplot2`/`S7` do `shinylive`.

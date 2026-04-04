@@ -451,7 +451,7 @@ server <- function(input, output, session) {
         geom_line(aes(y = valor, colour = tipo), linewidth = 1.1) +
         geom_point(aes(y = valor, colour = tipo), size = 2.0) +
         scale_colour_manual(
-          values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = NULL
+          values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = ""
         ) +
         scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
         formato_y(input$variavel) +
@@ -459,7 +459,7 @@ server <- function(input, output, session) {
              subtitle = paste0("Histórico 2002–", ANO_HIST_FIM,
                                " + Projeção ", ANO_HIST_FIM + 1L, "–", ano_max(),
                                " com IC 95%"),
-             x = NULL, y = unidade,
+             x = "", y = unidade,
              caption = "Fonte: IBGE (histórico); projeção própria (2024–2031).") +
         tema_base
     })
@@ -487,14 +487,14 @@ server <- function(input, output, session) {
           geom_area(data = \(d) filter(d, tipo == "Projetado"),
                     aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.35) +
           vl +
-          scale_fill_manual(values = PALETA_MACRO, name = NULL) +
-          scale_colour_manual(values = PALETA_MACRO, name = NULL) +
+          scale_fill_manual(values = PALETA_MACRO, name = "") +
+          scale_colour_manual(values = PALETA_MACRO, name = "") +
           scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
           scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                     accuracy = 1, suffix = " bi", scale = 1)) +
           labs(title    = paste0("VAB por Macrossetor — ", input$geo),
                subtitle = "R$ bilhões (correntes) | empilhado; sombreado = projetado",
-               x = NULL, y = "R$ bilhões",
+               x = "", y = "R$ bilhões",
                caption = "Fonte: IBGE (histórico); projeção própria.") +
           tema_base
       } else {
@@ -505,13 +505,13 @@ server <- function(input, output, session) {
           vl +
           geom_line(aes(y = vab_nominal / 1e3, colour = tipo), linewidth = 1.1) +
           geom_point(aes(y = vab_nominal / 1e3, colour = tipo), size = 2.0) +
-          scale_colour_manual(values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = NULL) +
+          scale_colour_manual(values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = "") +
           scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
           scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                     accuracy = 0.1, suffix = " bi")) +
           labs(title    = paste0("VAB — ", MACRO_LABEL[input$macrossetor], " — ", input$geo),
                subtitle = "R$ bilhões (correntes) | IC 95% no período projetado",
-               x = NULL, y = "R$ bilhões",
+               x = "", y = "R$ bilhões",
                caption = "Fonte: IBGE (histórico); projeção própria.") +
           tema_base
       }
@@ -540,14 +540,14 @@ server <- function(input, output, session) {
           geom_area(data = \(d) filter(d, tipo == "Projetado"),
                     aes(y = vab_nominal / 1e3), position = "stack", alpha = 0.40) +
           vl +
-          scale_fill_manual(values = PALETA_ATIV, name = NULL) +
-          scale_colour_manual(values = PALETA_ATIV, name = NULL) +
+          scale_fill_manual(values = PALETA_ATIV, name = "") +
+          scale_colour_manual(values = PALETA_ATIV, name = "") +
           scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
           scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                     accuracy = 1, suffix = " bi", scale = 1)) +
           labs(title    = paste0("VAB por Atividade — ", input$geo),
                subtitle = "R$ bilhões (correntes) | empilhado; sombreado = projetado",
-               x = NULL, y = "R$ bilhões",
+               x = "", y = "R$ bilhões",
                caption = "Fonte: IBGE (histórico); projeção própria.") +
           tema_base +
           theme(legend.text = element_text(size = 7), legend.key.size = unit(0.4, "cm"))
@@ -559,13 +559,13 @@ server <- function(input, output, session) {
           vl +
           geom_line(aes(y = vab_nominal / 1e3, colour = tipo), linewidth = 1.1) +
           geom_point(aes(y = vab_nominal / 1e3, colour = tipo), size = 2.0) +
-          scale_colour_manual(values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = NULL) +
+          scale_colour_manual(values = c(Histórico = COR_HIST, Projetado = COR_PROJ), name = "") +
           scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
           scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
                                                     accuracy = 0.1, suffix = " bi")) +
           labs(title    = paste0("VAB — ", ATIVIDADE_LABEL[input$atividade], " — ", input$geo),
                subtitle = "R$ bilhões (correntes) | IC 95% no período projetado",
-               x = NULL, y = "R$ bilhões",
+               x = "", y = "R$ bilhões",
                caption = "Fonte: IBGE (histórico); projeção própria.") +
           tema_base
       }
@@ -593,8 +593,8 @@ server <- function(input, output, session) {
         vl +
         camada_base_100(input$variavel) +
         geom_line(linewidth = 0.9) +
-        scale_linetype_manual(values = c(Histórico = "solid", Projetado = "dashed"), name = NULL) +
-        scale_colour_brewer(palette = "Set2", name = NULL) +
+        scale_linetype_manual(values = c(Histórico = "solid", Projetado = "dashed"), name = "") +
+        scale_colour_brewer(palette = "Set2", name = "") +
         scale_x_continuous(breaks = seq(2002, ANO_PROJ_FIM, 3)) +
         { if (!eh_indice(input$variavel))
             scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",",
@@ -606,7 +606,7 @@ server <- function(input, output, session) {
              subtitle = paste0("Histórico 2002–", ANO_HIST_FIM,
                                " (contínuo) + Projeção ", ANO_HIST_FIM + 1L, "–", ano_max(),
                                " (tracejado)"),
-             x = NULL, y = unidade,
+             x = "", y = unidade,
              caption = "Fonte: IBGE (histórico); projeção própria.") +
         tema_base
     })
