@@ -609,3 +609,5 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - Instalado `DT` no ambiente `renv` do projeto para atender a dependencia usada por `painel/painel.qmd`.
 - O lockfile permaneceu atualizado apos a instalacao.
 - Instalado `S7` no ambiente `renv` do projeto para atender a dependencia exigida por `ggplot2` no runtime do `shinylive`.
+- Ajustado `painel/painel.qmd` para carregar `library(S7)` explicitamente no bloco `shinylive-r`.
+- Isso forca o empacotamento de `S7` na build WebAssembly do preview local, evitando tela branca causada pela falha de inicializacao do `ggplot2` no navegador.

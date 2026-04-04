@@ -26,6 +26,7 @@ execute:
 
 library(shiny)
 library(bslib)
+library(S7)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
