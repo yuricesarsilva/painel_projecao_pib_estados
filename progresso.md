@@ -668,3 +668,9 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 **Critério adotado na revisão:**
 - manter inalterados os documentos de caráter histórico ou de baseline;
 - corrigir apenas os arquivos que funcionam como documentação viva do estado atual do projeto.
+
+**Regeneração local confirmada dos CSVs do painel:**
+- `painel/data/serie_principal.csv` ficou com `4.125` linhas, projeções apenas em `2024–2026`;
+- `painel/data/vab_macrossetor.csv` ficou com `3.300` linhas, projeções apenas em `2024–2026`;
+- `painel/data/vab_atividade.csv` ficou com `9.900` linhas, projeções apenas em `2024–2026`;
+- os três arquivos mantêm a coluna `horizonte`, mas o painel público já limita a exibição ao horizonte `h=3`.
