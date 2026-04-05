@@ -45,7 +45,7 @@ O painel permite visualizar:
 ├── R/
 │   ├── 01_leitura_dados.R       # Leitura e organização dos dados brutos
 │   ├── 02_consistencia.R        # Verificação de identidades contábeis
-│   ├── 03_projecao.R            # Modelagem e projeção (~1.089 séries, 10 modelos)
+│   ├── 03_projecao.R            # Modelagem e projeção (~1.089 séries, 7 modelos)
 │   ├── 04_reconciliacao.R       # Benchmarking top-down (BR → região → UF)
 │   ├── 05_output.R              # Geração de tabelas Excel e gráficos
 │   ├── 06_exportar_painel.R     # Exporta CSVs para o painel interativo
@@ -76,22 +76,19 @@ O painel permite visualizar:
 
 ### Modelos de Projeção
 
-Para cada série temporal (~1.089 no total), o script `03_projecao.R` seleciona automaticamente o melhor entre **10 modelos** via validação cruzada com janela expansiva (*expanding window CV*, mínimo de 15 observações de treino):
+Para cada série temporal (~1.089 no total), o script `03_projecao.R` seleciona automaticamente o melhor entre **7 modelos** via validação cruzada two-stage com janela expansiva (*expanding window CV*) para h=1, h=2 e h=3 simultaneamente (mínimo de 15 observações de treino):
 
 | Sigla | Modelo | Descrição |
 |-------|--------|-----------|
 | `RW` | Passeio aleatório com drift | Tendência linear simples como linha de base |
-| `ARMA` | Média móvel autorregressiva | Dependência linear de curto prazo |
+| `ARMA` | Média móvel autorregressiva | Dependência linear de curto prazo (d=0) |
 | `ARIMA` | ARIMA automático | Diferenciação + seleção por AIC |
-| `SARIMA` | ARIMA sazonal (período 2) | Captura ciclos bienais |
 | `ETS` | Suavização exponencial | Nível, tendência e sazonalidade adaptativa |
 | `ETS-A` | ETS com tendência amortecida | Crescimento desacelerando no horizonte |
 | `THETA` | Método Theta | Combinação de regressão linear e suavização |
-| `NNAR` | Rede neural autorregressiva | Captura não-linearidades |
-| `PROPHET` | Prophet (Meta) | Tendência, sazonalidade e calendário |
 | `SSM` | Modelo de espaço de estados | Filtro de Kalman (local linear trend) |
 
-A seleção usa o menor **MASE** (*Mean Absolute Scaled Error*) no período de validação (2017–2023).
+A seleção usa o menor **MASE ponderado** (*Mean Absolute Scaled Error* agregado com pesos 0,5 / 0,3 / 0,2 para h=1, h=2 e h=3). O CV opera em dois estágios: triagem rápida para todos os modelos e reavaliação precisa dos 3 finalistas com a mesma especificação usada na projeção final.
 
 ### Interpretação do Horizonte
 
@@ -131,7 +128,7 @@ As séries de volume e deflator são apresentadas como índices com **base 100 =
 ### Pré-requisitos
 
 - R ≥ 4.2
-- Pacotes: `tidyverse`, `forecast`, `prophet`, `readxl`, `openxlsx`
+- Pacotes: `tidyverse`, `forecast`, `readxl`, `openxlsx`
 - Dados brutos do IBGE em `base_bruta/` (não incluídos no repositório)
 
 ### Pipeline completo

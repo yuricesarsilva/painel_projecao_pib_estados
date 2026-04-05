@@ -270,7 +270,9 @@
 <section id="modelos">
   <h2>3. Modelos candidatos</h2>
   <p>
-    Para cada uma das ~1.089 séries, dez modelos de séries temporais são estimados e avaliados:
+    Para cada uma das ~1.089 séries, sete modelos de séries temporais são estimados e avaliados.
+    A escolha do conjunto foi feita considerando a natureza das séries — anuais, com ~22 observações —
+    priorizando modelos parcimoniosos e computacionalmente auditáveis:
   </p>
   <table>
     <thead>
@@ -278,37 +280,38 @@
     </thead>
     <tbody>
       <tr><td>RW</td><td>Passeio aleatório (<em>random walk</em>)</td><td>Linha de base simples; assume que o melhor palpite para amanhã é hoje</td></tr>
-      <tr><td>ARMA</td><td>Média móvel autorregressiva</td><td>Captura dependência linear de curto prazo sem tendência estocástica</td></tr>
+      <tr><td>ARMA</td><td>Média móvel autorregressiva (d=0)</td><td>Captura dependência linear de curto prazo em séries estacionárias</td></tr>
       <tr><td>ARIMA</td><td>ARIMA automático</td><td>Inclui diferenciação; seleção automática de ordem por AIC</td></tr>
-      <tr><td>SARIMA</td><td>ARIMA sazonal (período 2)</td><td>Captura ciclos bienais em dados anuais</td></tr>
       <tr><td>ETS</td><td>Suavização exponencial</td><td>Modela nível, tendência e sazonalidade de forma adaptativa</td></tr>
       <tr><td>ETS-A</td><td>ETS com tendência amortecida</td><td>Projeta crescimento desacelerando ao longo do horizonte</td></tr>
       <tr><td>THETA</td><td>Método Theta</td><td>Vencedor da competição M3; combina regressão linear e suavização</td></tr>
-      <tr><td>NNAR</td><td>Rede neural autorregressiva</td><td>Captura não-linearidades; média de múltiplas redes</td></tr>
-      <tr><td>PROPHET</td><td>Prophet (Meta)</td><td>Decompõe tendência, sazonalidade e efeitos de calendário</td></tr>
       <tr><td>SSM</td><td>Modelo de espaço de estados (<em>local linear trend</em>)</td><td>Filtro de Kalman via MLE; separa componente de nível e tendência</td></tr>
     </tbody>
   </table>
+  <div class="aviso">
+    <strong>Modelos excluídos do baseline:</strong> SARIMA (sazonalidade period=2 é artifício sem respaldo em dados anuais), NNAR (redes neurais autorregressivas são instáveis com ~22 observações) e Prophet (superdimensionado para séries anuais sem sazonalidade). Esses modelos podem ser reavaliados em rodadas metodológicas futuras com séries mais longas ou com regressoras exógenas.
+  </div>
 </section>
 
 <!-- 4 -->
 <section id="selecao">
   <h2>4. Seleção de modelos por validação cruzada</h2>
   <p>
-    A escolha do modelo para cada série é feita por <strong>validação cruzada com janela expansível
-    (<em>expanding window cross-validation</em>)</strong>. O procedimento consiste em:
+    A escolha do modelo para cada série é feita por <strong>validação cruzada two-stage com janela
+    expansível (<em>expanding window cross-validation</em>)</strong>. O procedimento consiste em:
   </p>
   <ol style="padding-left:24px; margin-bottom:14px; line-height:2;">
     <li>Fixar um tamanho mínimo de treino de <strong>15 observações</strong> (o que implica que o primeiro conjunto de teste começa em 2017).</li>
-    <li>A cada passo, expandir o conjunto de treino em um ano, estimar todos os dez modelos e gerar previsões para os anos seguintes.</li>
-    <li>Calcular o <strong>MASE</strong> (<em>Mean Absolute Scaled Error</em>) acumulado para cada modelo — uma métrica que escala o erro pela dificuldade da série, permitindo comparação entre séries de magnitudes muito diferentes.</li>
-    <li>Selecionar o modelo com <strong>menor MASE médio</strong> no período de validação.</li>
+    <li>A cada passo, expandir o conjunto de treino em um ano, estimar todos os sete modelos e gerar previsões para <strong>h=1, h=2 e h=3</strong> simultaneamente — em vez de avaliar apenas o próximo ano. Isso alinha a seleção ao horizonte real de uso do painel (2024–2026).</li>
+    <li>Calcular o <strong>MASE ponderado</strong> (<em>Mean Absolute Scaled Error</em> com pesos 0,5 / 0,3 / 0,2 para h=1, h=2 e h=3) — uma métrica que escala o erro pela dificuldade da série e pondera os horizontes conforme sua relevância operacional.</li>
+    <li><strong>Estágio 1 (triagem rápida):</strong> selecionar os 3 modelos finalistas por menor MASE ponderado, usando estimação aproximada.</li>
+    <li><strong>Estágio 2 (avaliação precisa):</strong> reavaliar apenas os 3 finalistas com a mesma especificação que será usada na projeção final (sem aproximação numérica para ARIMA/ARMA). O vencedor final é o modelo com menor MASE ponderado neste estágio.</li>
   </ol>
   <div class="destaque">
-    <strong>Por que MASE?</strong> Ao contrário do RMSE ou do MAPE, o MASE é robusto a séries com valores próximos de zero e não penaliza desproporcionalmente erros em séries muito voláteis. Ele compara o erro do modelo com o erro de um passeio aleatório simples, sendo valores abaixo de 1,0 indicativos de que o modelo supera a linha de base.
+    <strong>Por que MASE ponderado em múltiplos horizontes?</strong> Avaliar apenas h=1 favorece modelos que acertam o próximo ano mas degradam rapidamente. Ao incluir h=2 e h=3 com peso decrescente, a seleção passa a refletir o desempenho real no horizonte de 2024–2026. O MASE, por sua vez, é robusto a séries com valores próximos de zero e compara o erro do modelo com o erro de um passeio aleatório simples — valores abaixo de 1,0 indicam que o modelo supera a linha de base.
   </div>
   <p>
-    Para a <strong>projeção final</strong> (após a seleção), os modelos ARIMA e ARMA são reestimados sem a opção de aproximação numérica, garantindo maior precisão nos parâmetros.
+    Para a <strong>projeção final</strong> (após a seleção), os modelos ARIMA e ARMA são reestimados sem a opção de aproximação numérica, garantindo maior precisão nos parâmetros. Essa especificação é a mesma usada no estágio 2 do CV, eliminando a incoerência entre seleção e projeção.
   </p>
 </section>
 
