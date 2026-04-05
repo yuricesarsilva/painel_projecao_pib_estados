@@ -70,8 +70,8 @@
 
 - [x] Definir a família principal de modelos do baseline
 - [x] Mover modelos experimentais para trilha separada ou removê-los do baseline
-- [ ] Atualizar README com a nova família de modelos
-- [ ] Atualizar metodologia com a nova família de modelos
+- [x] Atualizar README com a nova família de modelos
+- [x] Atualizar metodologia com a nova família de modelos
 
 ### Robustez de execução
 
@@ -127,5 +127,5 @@
 - [x] Bloco 1 concluído
 - [x] Bloco 2 concluído
 - [x] Bloco 3 concluído
-- [x] Bloco 4 concluído (parcial — README e metodologia pendentes)
+- [x] Bloco 4 concluído
 - [ ] Bloco 5 concluído
