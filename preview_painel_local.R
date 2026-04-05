@@ -32,19 +32,14 @@ codigo <- sub(
   fixed = TRUE
 )
 codigo <- sub(
-  'href = "https://yuricesarsilva.github.io/painel_projecao_pib_estados/metodologia.html"',
-  'href = "/metodologia/metodologia.html"',
-  codigo,
-  fixed = TRUE
-)
-codigo <- sub(
   'href = "../metodologia.html"',
   'href = "/metodologia/metodologia.html"',
   codigo,
   fixed = TRUE
 )
+# Fallback: caso o qmd use a URL absoluta do GitHub Pages
 codigo <- sub(
-  'href = "metodologia.html"',
+  'href = "https://yuricesarsilva.github.io/painel_projecao_pib_estados/metodologia.html"',
   'href = "/metodologia/metodologia.html"',
   codigo,
   fixed = TRUE
