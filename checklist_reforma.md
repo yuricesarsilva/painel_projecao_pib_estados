@@ -43,6 +43,8 @@
 
 ## Bloco 3 - QA e governança analítica
 
+> Observação de estágio atual: a distinção operacional/exploratória foi implementada nesta etapa da reforma, mas o produto público do painel foi posteriormente simplificado para `h=3` (`2024–2026`), mantendo o horizonte longo apenas nas saídas técnicas.
+
 - [x] Tornar `R/02_consistencia.R` uma barreira de execução
 - [x] Classificar checagens em erro fatal e warning monitorado
 - [x] Fazer `R/run_all.R` interromper o pipeline quando o QA falhar

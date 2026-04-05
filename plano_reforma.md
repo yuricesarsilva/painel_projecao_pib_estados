@@ -169,6 +169,10 @@ O pipeline deixa de avançar quando as identidades essenciais falham.
 - tratar 2028-2031 como horizonte exploratório;
 - refletir essa distinção no painel e na documentação.
 
+**Nota de compatibilidade com o estado atual**
+- nesta rodada, a solução pública acabou sendo ainda mais conservadora: o painel passou a exibir apenas `2024–2026 (h=3)`;
+- a extensão do horizonte até `2031` permanece apenas nas saídas técnicas complementares.
+
 **Critério de conclusão**
 O usuário consegue distinguir imediatamente o trecho mais confiável do horizonte mais frágil.
 

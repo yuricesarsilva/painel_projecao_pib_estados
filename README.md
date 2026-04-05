@@ -32,7 +32,7 @@ O painel permite visualizar:
 - VAB desagregado por atividade econômica (12 atividades)
 - Comparativo entre territórios
 - Tabela interativa com todas as variáveis e fontes de dados (série principal, macrossetor, atividade)
-- Filtro de anos de projeção exibidos (padrão: 3 anos, máximo: 8 anos)
+- Filtro de anos de projeção exibidos (padrão: 3 anos, mínimo: 1 ano, máximo: 3 anos)
 - Números formatados no padrão brasileiro (vírgula decimal, ponto milhar)
 - Alternância modo claro/escuro via botão na barra superior
 
@@ -69,8 +69,8 @@ O painel permite visualizar:
 
 - **Fonte:** IBGE — Contas Regionais do Brasil
 - **Período histórico:** 2002–2023 (22 observações anuais)
-- **Horizonte operacional recomendado:** 2024–2027
-- **Horizonte exploratório:** 2028–2031
+- **Horizonte público do painel:** 2024–2026
+- **Horizonte técnico complementar:** 2024–2031, mantido apenas nas planilhas auxiliares
 - **Cobertura:** 27 UFs, 5 regiões geográficas e Brasil (33 territórios)
 - **Variáveis modeladas:** índices de volume e preço por atividade/macrossetor, log dos impostos
 
@@ -97,7 +97,7 @@ A seleção usa o menor **MASE** (*Mean Absolute Scaled Error*) no período de v
 
 - `2024–2026`: horizonte público do painel.
 - `2024–2031`: horizonte técnico completo, mantido apenas nas planilhas auxiliares.
-- O painel deixa de usar a distinção operacional/exploratória na interface pública.
+- O painel não usa mais a distinção operacional/exploratória na interface pública.
 
 ### Séries Projetadas
 

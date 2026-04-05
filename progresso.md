@@ -649,3 +649,22 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - `R/06_exportar_painel.R` passou a preservar `output/tabelas/projecoes_painel_h8.xlsx` como planilha técnica de referência;
 - o arquivo `output/tabelas/projecoes_painel_h3.xlsx` agora é gerado como cópia estrutural idêntica da planilha técnica, mudando apenas o horizonte exportado para `2024–2026`;
 - as abas das duas planilhas passam a usar a mesma convenção: `serie_principal`, `vab_macrossetor` e `vab_atividade`.
+
+## Etapa 18 — Organização da documentação antes do Bloco 4
+
+**Objetivo:**
+- revisar os arquivos Markdown do projeto e alinhar a documentação viva ao estado atual da reforma antes de iniciar o Bloco 4.
+
+**O que foi ajustado:**
+- `README.md`
+  - removida a referência incoerente ao filtro de projeção até `8` anos na interface do painel;
+  - atualizada a seção metodológica para refletir `2024–2026` como horizonte público do painel e `2024–2031` apenas como horizonte técnico complementar;
+  - reforçado que a interface pública não usa mais a distinção operacional/exploratória.
+- `checklist_reforma.md`
+  - adicionada nota de compatibilidade no Bloco 3 explicando que a distinção operacional/exploratória foi uma etapa intermediária e que o painel público atual foi simplificado para `h=3`.
+- `plano_reforma.md`
+  - adicionada nota de compatibilidade na seção de horizonte para registrar que, no estado atual do projeto, o painel público ficou restrito a `2024–2026`, deixando a extensão até `2031` apenas nas saídas técnicas.
+
+**Critério adotado na revisão:**
+- manter inalterados os documentos de caráter histórico ou de baseline;
+- corrigir apenas os arquivos que funcionam como documentação viva do estado atual do projeto.
