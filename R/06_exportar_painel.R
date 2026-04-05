@@ -22,10 +22,11 @@ library(tidyverse)
 #                          horizonte público do painel
 #
 # Saídas técnicas adicionais:
-#   output/tabelas/projecoes_painel_h3.xlsx
-#     — mesmas estruturas do painel, mas limitadas ao horizonte público
 #   output/tabelas/projecoes_painel_h8.xlsx
-#     — mesmas estruturas com o horizonte técnico completo (2024–2031)
+#     — estrutura técnica de referência com o horizonte completo (2024–2031)
+#   output/tabelas/projecoes_painel_h3.xlsx
+#     — cópia estrutural idêntica da saída h=8, mas limitada ao horizonte
+#       público do painel (2024–2026)
 #
 # Estrutura comum (formato longo):
 #   geo, geo_tipo, regiao, ano, <variavel(is)>, lo95, hi95, tipo, horizonte
@@ -413,37 +414,22 @@ if (!is.null(vab_ativ_hist) && !is.null(vab_ativ_rec)) {
 
 message("Salvando saídas técnicas adicionais (h=3 e h=8)...")
 
-serie_principal_h3 <- serie_principal_painel |>
-  filter(tipo == "Projetado")
+exportar_workbook_painel <- function(caminho, serie_proj, macro_proj, ativ_proj = NULL) {
+  wb <- openxlsx::createWorkbook()
 
-vab_macrossetor_h3 <- vab_macrossetor_painel |>
-  filter(tipo == "Projetado")
+  openxlsx::addWorksheet(wb, "serie_principal")
+  openxlsx::writeData(wb, "serie_principal", serie_proj)
 
-wb_h3 <- openxlsx::createWorkbook()
+  openxlsx::addWorksheet(wb, "vab_macrossetor")
+  openxlsx::writeData(wb, "vab_macrossetor", macro_proj)
 
-openxlsx::addWorksheet(wb_h3, "serie_principal_h3")
-openxlsx::writeData(wb_h3, "serie_principal_h3", serie_principal_h3)
+  if (!is.null(ativ_proj)) {
+    openxlsx::addWorksheet(wb, "vab_atividade")
+    openxlsx::writeData(wb, "vab_atividade", ativ_proj)
+  }
 
-openxlsx::addWorksheet(wb_h3, "vab_macrossetor_h3")
-openxlsx::writeData(wb_h3, "vab_macrossetor_h3", vab_macrossetor_h3)
-
-if (exists("vab_atividade_painel")) {
-  vab_atividade_h3 <- vab_atividade_painel |>
-    filter(tipo == "Projetado")
-
-  openxlsx::addWorksheet(wb_h3, "vab_atividade_h3")
-  openxlsx::writeData(wb_h3, "vab_atividade_h3", vab_atividade_h3)
+  openxlsx::saveWorkbook(wb, caminho, overwrite = TRUE)
 }
-
-openxlsx::saveWorkbook(
-  wb_h3,
-  "output/tabelas/projecoes_painel_h3.xlsx",
-  overwrite = TRUE
-)
-
-message("  projecoes_painel_h3.xlsx: horizonte público 2024–2026 preservado")
-
-wb_h8 <- openxlsx::createWorkbook()
 
 serie_principal_h8 <- serie_principal |>
   filter(tipo == "Projetado")
@@ -451,26 +437,42 @@ serie_principal_h8 <- serie_principal |>
 vab_macrossetor_h8 <- vab_macrossetor_out |>
   filter(tipo == "Projetado")
 
-openxlsx::addWorksheet(wb_h8, "serie_principal_h8")
-openxlsx::writeData(wb_h8, "serie_principal_h8", serie_principal_h8)
-
-openxlsx::addWorksheet(wb_h8, "vab_macrossetor_h8")
-openxlsx::writeData(wb_h8, "vab_macrossetor_h8", vab_macrossetor_h8)
-
-if (exists("vab_atividade_out")) {
-  vab_atividade_h8 <- vab_atividade_out |>
+vab_atividade_h8 <- if (exists("vab_atividade_out")) {
+  vab_atividade_out |>
     filter(tipo == "Projetado")
-
-  openxlsx::addWorksheet(wb_h8, "vab_atividade_h8")
-  openxlsx::writeData(wb_h8, "vab_atividade_h8", vab_atividade_h8)
+} else {
+  NULL
 }
 
-openxlsx::saveWorkbook(
-  wb_h8,
-  "output/tabelas/projecoes_painel_h8.xlsx",
-  overwrite = TRUE
+exportar_workbook_painel(
+  caminho = "output/tabelas/projecoes_painel_h8.xlsx",
+  serie_proj = serie_principal_h8,
+  macro_proj = vab_macrossetor_h8,
+  ativ_proj = vab_atividade_h8
 )
 
 message("  projecoes_painel_h8.xlsx: horizonte técnico 2024–2031 preservado")
+
+serie_principal_h3 <- serie_principal_painel |>
+  filter(tipo == "Projetado")
+
+vab_macrossetor_h3 <- vab_macrossetor_painel |>
+  filter(tipo == "Projetado")
+
+vab_atividade_h3 <- if (exists("vab_atividade_painel")) {
+  vab_atividade_painel |>
+    filter(tipo == "Projetado")
+} else {
+  NULL
+}
+
+exportar_workbook_painel(
+  caminho = "output/tabelas/projecoes_painel_h3.xlsx",
+  serie_proj = serie_principal_h3,
+  macro_proj = vab_macrossetor_h3,
+  ativ_proj = vab_atividade_h3
+)
+
+message("  projecoes_painel_h3.xlsx: cópia estrutural do h=8 no horizonte público 2024–2026")
 
 message("\n06_exportar_painel.R concluído. CSVs em painel/data/")

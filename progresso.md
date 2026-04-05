@@ -644,3 +644,8 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 - `painel/metodologia.html` foi reescrita para falar apenas do produto exibido no painel;
 - o horizonte metodológico passou a ser apresentado como `2024–2026 (h=3)` em todo o texto;
 - foram removidas referências remanescentes a horizonte operacional/exploratório e ao recorte `2024–2031` no corpo da nota.
+
+**Ajuste adicional nas planilhas técnicas do painel:**
+- `R/06_exportar_painel.R` passou a preservar `output/tabelas/projecoes_painel_h8.xlsx` como planilha técnica de referência;
+- o arquivo `output/tabelas/projecoes_painel_h3.xlsx` agora é gerado como cópia estrutural idêntica da planilha técnica, mudando apenas o horizonte exportado para `2024–2026`;
+- as abas das duas planilhas passam a usar a mesma convenção: `serie_principal`, `vab_macrossetor` e `vab_atividade`.

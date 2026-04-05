@@ -19,6 +19,7 @@ Esta versão do projeto adota uma separação explícita entre:
 
 - **painel público (`h=3`)**: o produto visual e os CSVs consumidos pelo painel passam a exibir apenas `2024–2026`;
 - **saída técnica (`h=8`)**: o horizonte completo `2024–2031` continua sendo gerado e fica disponível em `output/tabelas/projecoes_painel_h8.xlsx`.
+- **cópia técnica (`h=3`)**: uma cópia estrutural idêntica da planilha técnica também é gerada em `output/tabelas/projecoes_painel_h3.xlsx`, mas restrita ao horizonte público `2024–2026`.
 
 Sempre que houver referência antiga a `2024–2031` como horizonte do painel, considere que ela foi substituída por esta regra mais recente: **o painel mostra só três anos projetados; o horizonte longo fica fora do painel**.
 
@@ -185,8 +186,8 @@ Esse helper reaproveita o bloco `shinylive-r` de `painel/painel.qmd`, mas serve 
 | Arquivo/Pasta | Conteúdo |
 |---------------|----------|
 | `output/tabelas/projecoes_pib_estadual.xlsx` | Tabelas com projeções (9 abas) |
-| `output/tabelas/projecoes_painel_h3.xlsx` | Saída técnica adicional com o horizonte público projetado (2024–2026) |
-| `output/tabelas/projecoes_painel_h8.xlsx` | Saída técnica adicional com o horizonte projetado completo usado fora do painel |
+| `output/tabelas/projecoes_painel_h3.xlsx` | Cópia estrutural da planilha técnica, limitada ao horizonte público projetado (2024–2026) |
+| `output/tabelas/projecoes_painel_h8.xlsx` | Planilha técnica de referência com o horizonte projetado completo usado fora do painel |
 | `output/graficos/` | Gráficos PNG por variável e por território |
 | `painel/data/serie_principal.csv` | Séries históricas + projeções públicas até 2026, 5 variáveis, IC 95% |
 | `painel/data/vab_macrossetor.csv` | VAB histórico + projeções públicas até 2026 por macrossetor, IC 95% |
