@@ -21,10 +21,11 @@ library(tidyverse)
 #   vab_atividade.csv    — histórico + projetado por atividade, limitado ao
 #                          horizonte público do painel
 #
-# Saída técnica adicional:
+# Saídas técnicas adicionais:
+#   output/tabelas/projecoes_painel_h3.xlsx
+#     — mesmas estruturas do painel, mas limitadas ao horizonte público
 #   output/tabelas/projecoes_painel_h8.xlsx
-#     — mesmas estruturas do painel, mas preservando o horizonte técnico
-#       completo (2024–2031)
+#     — mesmas estruturas com o horizonte técnico completo (2024–2031)
 #
 # Estrutura comum (formato longo):
 #   geo, geo_tipo, regiao, ano, <variavel(is)>, lo95, hi95, tipo, horizonte
@@ -410,7 +411,37 @@ if (!is.null(vab_ativ_hist) && !is.null(vab_ativ_rec)) {
   message("vab_atividade_hist.rds ou vab_atividade_reconciliada.rds não encontrados — pulando.")
 }
 
-message("Salvando saída técnica adicional com horizonte completo (h=8)...")
+message("Salvando saídas técnicas adicionais (h=3 e h=8)...")
+
+serie_principal_h3 <- serie_principal_painel |>
+  filter(tipo == "Projetado")
+
+vab_macrossetor_h3 <- vab_macrossetor_painel |>
+  filter(tipo == "Projetado")
+
+wb_h3 <- openxlsx::createWorkbook()
+
+openxlsx::addWorksheet(wb_h3, "serie_principal_h3")
+openxlsx::writeData(wb_h3, "serie_principal_h3", serie_principal_h3)
+
+openxlsx::addWorksheet(wb_h3, "vab_macrossetor_h3")
+openxlsx::writeData(wb_h3, "vab_macrossetor_h3", vab_macrossetor_h3)
+
+if (exists("vab_atividade_painel")) {
+  vab_atividade_h3 <- vab_atividade_painel |>
+    filter(tipo == "Projetado")
+
+  openxlsx::addWorksheet(wb_h3, "vab_atividade_h3")
+  openxlsx::writeData(wb_h3, "vab_atividade_h3", vab_atividade_h3)
+}
+
+openxlsx::saveWorkbook(
+  wb_h3,
+  "output/tabelas/projecoes_painel_h3.xlsx",
+  overwrite = TRUE
+)
+
+message("  projecoes_painel_h3.xlsx: horizonte público 2024–2026 preservado")
 
 wb_h8 <- openxlsx::createWorkbook()
 

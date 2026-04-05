@@ -23,9 +23,9 @@ Esta versão do projeto adota uma separação explícita entre:
 Sempre que houver referência antiga a `2024–2031` como horizonte do painel, considere que ela foi substituída por esta regra mais recente: **o painel mostra só três anos projetados; o horizonte longo fica fora do painel**.
 
 O painel permite visualizar:
-- Séries históricas (2002–2023) e projeções (2024–2031) com intervalo de confiança de 95%
-- Destaque analítico para `2024–2027` como **horizonte operacional**
-- Tratamento de `2028–2031` como **horizonte exploratório**, com maior cautela interpretativa
+- Séries históricas (2002–2023) e projeções públicas (2024–2026) com intervalo de confiança de 95%
+- Controle de exibição do horizonte do painel entre `1` e `3` anos projetados
+- Saídas técnicas complementares em planilhas separadas para `h=3` e `h=8`
 - PIB nominal, VAB total, impostos, PIB real acumulado e deflator implícito acumulado (índices base 100 = 2002)
 - VAB desagregado por macrossetor (agropecuária, indústria, serviços, administração pública)
 - VAB desagregado por atividade econômica (12 atividades)
@@ -94,9 +94,9 @@ A seleção usa o menor **MASE** (*Mean Absolute Scaled Error*) no período de v
 
 ### Interpretação do Horizonte
 
-- `2024–2027`: horizonte principal para leitura operacional e comparação pública.
-- `2028–2031`: horizonte exploratório, mantido para referência técnica, mas com maior fragilidade interpretativa.
-- O painel sinaliza visualmente o trecho exploratório para reduzir leitura excessivamente precisa dos anos mais distantes.
+- `2024–2026`: horizonte público do painel.
+- `2024–2031`: horizonte técnico completo, mantido apenas nas planilhas auxiliares.
+- O painel deixa de usar a distinção operacional/exploratória na interface pública.
 
 ### Séries Projetadas
 
@@ -185,6 +185,7 @@ Esse helper reaproveita o bloco `shinylive-r` de `painel/painel.qmd`, mas serve 
 | Arquivo/Pasta | Conteúdo |
 |---------------|----------|
 | `output/tabelas/projecoes_pib_estadual.xlsx` | Tabelas com projeções (9 abas) |
+| `output/tabelas/projecoes_painel_h3.xlsx` | Saída técnica adicional com o horizonte público projetado (2024–2026) |
 | `output/tabelas/projecoes_painel_h8.xlsx` | Saída técnica adicional com o horizonte projetado completo usado fora do painel |
 | `output/graficos/` | Gráficos PNG por variável e por território |
 | `painel/data/serie_principal.csv` | Séries históricas + projeções públicas até 2026, 5 variáveis, IC 95% |

@@ -624,3 +624,10 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 
 **Pendência operacional:**
 - regenerar os CSVs do painel e a planilha técnica `h=8` localmente, pois as tentativas automáticas desta sessão ficaram instáveis no shell.
+
+**Ajuste posterior solicitado pelo usuário:**
+- o controle `Anos de projeção exibidos` do painel deve ir de `1` a `3`, e não ficar travado em `3`;
+- a coluna `Horizonte` deixa de aparecer na tabela do painel;
+- as saídas técnicas passam a incluir duas planilhas auxiliares:
+  - `output/tabelas/projecoes_painel_h3.xlsx`
+  - `output/tabelas/projecoes_painel_h8.xlsx`

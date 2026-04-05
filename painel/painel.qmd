@@ -243,7 +243,7 @@ ui <- page_sidebar(
                   choices  = setNames(names(VARIAVEL_LABEL), VARIAVEL_LABEL),
                   selected = "pib_nominal"),
       sliderInput("n_proj", "Anos de projeção exibidos",
-                  min = H_PAINEL, max = H_PAINEL,
+                  min = 1, max = H_PAINEL,
                   value = H_PAINEL, step = 1, ticks = FALSE)
     ),
     conditionalPanel(
@@ -601,7 +601,7 @@ server <- function(input, output, session) {
       serie() |>
         filter(geo == input$tabela_geo, variavel == input$tabela_var) |>
         transmute(
-          Território = geo, Tipo = tipo, Horizonte = horizonte, Ano = ano,
+          Território = geo, Tipo = tipo, Ano = ano,
           Variável   = coalesce(VARIAVEL_LABEL[variavel], variavel),
           !!lbl_valor := round(valor, 2),
           `Limite inferior (IC 95%)` = round(lo95, 2),
@@ -613,7 +613,7 @@ server <- function(input, output, session) {
       if (input$tabela_mac != "todos")
         d <- d |> filter(macrossetor == input$tabela_mac)
       d |> transmute(
-        Território  = geo, Tipo = tipo, Horizonte = horizonte, Ano = ano,
+        Território  = geo, Tipo = tipo, Ano = ano,
         Macrossetor = coalesce(MACRO_LABEL[macrossetor], macrossetor),
         `VAB Nominal (R$ milhões)` = round(vab_nominal, 1),
         `Limite inferior (IC 95%)` = round(vab_lo95, 1),
@@ -625,7 +625,7 @@ server <- function(input, output, session) {
       if (input$tabela_ativ != "todas")
         d <- d |> filter(atividade == input$tabela_ativ)
       d |> transmute(
-        Território  = geo, Tipo = tipo, Horizonte = horizonte, Ano = ano,
+        Território  = geo, Tipo = tipo, Ano = ano,
         Macrossetor = coalesce(MACRO_LABEL[macrossetor], macrossetor),
         Atividade   = coalesce(ATIVIDADE_LABEL[atividade], atividade),
         `VAB Nominal (R$ milhões)` = round(vab_nominal, 1),
