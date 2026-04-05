@@ -24,21 +24,22 @@ library(forecast)
 #        serie_id com prefixo "ativ__" para evitar colisão com macrossetores
 #        (ex.: "Roraima|ativ__agropecuaria|idx_volume")
 #
-# Modelos candidatos (10 por série):
-#   rw, arma, arima, sarima, ets, ets_amort, theta, nnar, prophet, ssm
-#   Seleção por validação cruzada expanding-window, métrica MASE.
-#   Para projeção final: arima/arma sem approximation (mais preciso).
+# Família de modelos (7 por série):
+#   rw, arma, arima, ets, ets_amort, theta, ssm
+#   Excluídos do baseline: sarima (period=2 sem respaldo em dados anuais),
+#   nnar (instável com ~22 obs), prophet (superdimensionado para anuais).
 #
-# Notas sobre modelos:
-#   SARIMA: dados anuais não têm sazonalidade intra-anual; implementado com
-#     period=2 para capturar ciclos bienais — auto.arima descarta se não
-#     significativo.
-#   SSM: StructTS local linear trend (filtro de Kalman via MLE), substitui
-#     BSTS (indisponível para R 4.4.2).
+# Seleção — CV two-stage expanding-window, horizontes h=1/2/3:
+#   Stage 1 (triagem rápida, approx=TRUE): todos os 7 modelos → top N_FINALISTAS
+#   Stage 2 (avaliação precisa, approx=FALSE): apenas os finalistas; modelos
+#     não-ARIMA reutilizam resultado do stage 1. Vencedor = menor MASE ponderado.
+#   Métrica: MASE ponderado (pesos PESOS_CV = 0.5/0.3/0.2 para h=1/2/3).
+#   Para projeção final: arima/arma com stepwise=FALSE, approximation=FALSE,
+#     max.p/q=3, max.P/Q/D=0 — mesma especificação do stage 2.
 #
-# Cache: a seleção de modelos usa metadata com hashes dos insumos, parâmetros
-# e do próprio script. O cache só é reutilizado quando a assinatura continua
-# válida; caso contrário, o CV é recalculado automaticamente.
+# Cache: a seleção usa metadata com hashes dos insumos, parâmetros e do script.
+#   O cache só é reutilizado quando a assinatura continua válida.
+#   Schema atual: CACHE_SCHEMA_VERSION = "bloco4_v1" (config.R).
 #
 # Parte 7 — Derivações contábeis (macrossetores):
 #   VAB nominal macro  = vab_2023 × cumprod(idx_volume × idx_preco)
@@ -54,14 +55,18 @@ library(forecast)
 #   IC 95% propagado   = vab_2023_ativ × cumprod(idx_lo95 × idx_prc_lo95)
 #
 # Entradas:  dados/especiais.rds, dados/conta_producao.rds
-# Saídas:    dados/selecao_modelos.rds   (cache CV — uma linha por série)
-#            dados/projecoes_brutas.rds  (proj + IC por série × ano)
-#            dados/params_modelos.rds    (modelo, parâmetros, MASE, RMSE)
+# Saídas:    dados/selecao_modelos.rds      (cache CV two-stage — uma linha por série)
+#            dados/selecao_modelos_meta.rds (metadata de invalidação do cache)
+#            dados/metricas_cv_detalhadas.rds (métricas por série × modelo × horizonte)
+#            dados/projecoes_brutas.rds     (proj + IC por série × ano)
+#            dados/params_modelos.rds       (modelo, parâmetros, mase_ponderado,
+#                                            mase_venc_h1/h2/h3 por série)
+#            dados/fallback_log.rds         (séries com fallback para ARIMA)
 #            dados/vab_macrossetor_proj.rds
-#            dados/vab_macro_hist.rds    (histórico macro para gráficos)
-#            dados/vab_atividade_hist.rds (histórico atividade para gráficos)
-#            dados/vab_atividade_proj.rds (proj + IC por atividade × geo × ano)
-#            dados/projecoes_derivadas.rds (PIB, VAB, impostos, deflator)
+#            dados/vab_macro_hist.rds       (histórico macro para gráficos)
+#            dados/vab_atividade_hist.rds   (histórico atividade para gráficos)
+#            dados/vab_atividade_proj.rds   (proj + IC por atividade × geo × ano)
+#            dados/projecoes_derivadas.rds  (PIB, VAB, impostos, deflator)
 # ==============================================================================
 
 # ==============================================================================

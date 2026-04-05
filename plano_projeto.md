@@ -111,22 +111,34 @@ Cada tabela N contém os subtópicos N.1 (Total) a N.13 (Outros serviços) com:
 
 Dados de impostos líquidos de subsídios por UF (fonte: SIDRA/IBGE).
 
-## Estrutura Proposta do Projeto (R)
+## Estrutura do Projeto (estado atual)
 
 ```
 Projeções/
-├── plano_projeto.md          ← este arquivo
+├── plano_projeto.md              ← documento de escopo original
 ├── projeto_projecao_pib.Rproj
-├── base_bruta/               ← dados originais IBGE
+├── renv.lock                     ← ambiente reproduzível (renv)
+├── base_bruta/                   ← dados originais IBGE (não versionados)
+├── dados/                        ← dados processados intermediários (não versionados)
+├── output/                       ← tabelas e gráficos gerados (não versionados)
+│   ├── tabelas/
+│   ├── graficos/
+│   └── logs/
 ├── R/
-│   ├── 01_leitura_dados.R    ← importar e estruturar todas as tabelas
-│   ├── 02_consistencia.R     ← verificar identidades contábeis nos dados históricos
-│   ├── 03_projecao.R         ← modelos de projeção por variável/setor
-│   ├── 04_reconciliacao.R    ← garantir restrições de agregação (ex.: benchmarking proporcional / Denton)
-│   └── 05_output.R           ← gerar tabelas e gráficos de resultado
-└── output/
-    ├── tabelas/
-    └── graficos/
+│   ├── config.R              ← parâmetros centrais (anos, horizonte, seed, tolerâncias)
+│   ├── utils_cache.R         ← cache com invalidação automática por hash
+│   ├── utils_logging.R       ← logging estruturado por execução
+│   ├── run_all.R             ← orquestra o pipeline completo
+│   ├── 01_leitura_dados.R    ← importa e estrutura dados brutos do IBGE
+│   ├── 02_consistencia.R     ← verifica identidades contábeis (barreira de execução)
+│   ├── 03_projecao.R         ← CV two-stage + 7 modelos + projeção ~1.089 séries
+│   ├── 04_reconciliacao.R    ← benchmarking top-down (BR → região → UF)
+│   ├── 05_output.R           ← tabelas Excel e gráficos PNG
+│   └── 06_exportar_painel.R  ← exporta CSVs para o painel interativo
+└── painel/
+    ├── painel.qmd            ← Quarto Dashboard + shinylive (GitHub Pages)
+    ├── metodologia.html      ← nota metodológica pública
+    └── data/                 ← CSVs versionados consumidos pelo painel
 ```
 
 ## Abordagem Metodológica (referência)

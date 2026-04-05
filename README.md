@@ -142,13 +142,13 @@ source("R/run_all.R")
 ```r
 source("R/01_leitura_dados.R")   # ~2 min
 source("R/02_consistencia.R")    # ~1 min
-source("R/03_projecao.R")        # ~30–60 min (1ª vez; usa cache nas seguintes)
+source("R/03_projecao.R")        # ~20–40 min (1ª vez; usa cache nas seguintes)
 source("R/04_reconciliacao.R")   # ~2 min
 source("R/05_output.R")          # ~5 min
 source("R/06_exportar_painel.R") # ~1 min
 ```
 
-> **Cache:** `03_projecao.R` salva os modelos em `dados/selecao_modelos.rds`. Delete esse arquivo ao adicionar novas séries para forçar o reprocessamento.
+> **Cache:** `03_projecao.R` usa CV two-stage com invalidação automática por hash — não é necessário deletar o cache manualmente. Ele é recalculado sempre que os dados, os parâmetros de `config.R` ou o próprio script mudarem. O schema atual é `"bloco4_v1"` (definido em `R/config.R`).
 
 ### Atualizar o painel
 

@@ -16,14 +16,18 @@ source("R/utils_logging.R", local = FALSE)
 #     → dados/consistencia.rds       (resultados das 5 checagens contábeis)
 #
 #   03_projecao.R                    (~1.089 séries: macro + impostos + ativ.)
-#     → dados/selecao_modelos.rds    (cache CV — melhor modelo por série)
-#     → dados/projecoes_brutas.rds   (proj + IC 95% por série × ano)
-#     → dados/params_modelos.rds     (modelo, parâmetros, MASE, RMSE)
-#     → dados/vab_macro_hist.rds     (histórico VAB macro para gráficos)
-#     → dados/vab_atividade_hist.rds (histórico VAB atividade para gráficos)
+#     → dados/selecao_modelos.rds       (cache CV two-stage — melhor modelo por série)
+#     → dados/selecao_modelos_meta.rds  (metadata de invalidação do cache)
+#     → dados/metricas_cv_detalhadas.rds (métricas por série × modelo × horizonte)
+#     → dados/projecoes_brutas.rds      (proj + IC 95% por série × ano)
+#     → dados/params_modelos.rds        (modelo, parâmetros, mase_ponderado,
+#                                         mase_venc_h1/h2/h3 por série)
+#     → dados/fallback_log.rds          (log de fallbacks para ARIMA)
+#     → dados/vab_macro_hist.rds        (histórico VAB macro para gráficos)
+#     → dados/vab_atividade_hist.rds    (histórico VAB atividade para gráficos)
 #     → dados/vab_macrossetor_proj.rds
-#     → dados/vab_atividade_proj.rds (proj + IC por atividade × geo × ano)
-#     → dados/projecoes_derivadas.rds (PIB, VAB, impostos, deflator, cresc.)
+#     → dados/vab_atividade_proj.rds    (proj + IC por atividade × geo × ano)
+#     → dados/projecoes_derivadas.rds   (PIB, VAB, impostos, deflator, cresc.)
 #
 #   04_reconciliacao.R               (benchmarking top-down: BR → reg → UF)
 #     → dados/projecoes_reconciliadas.rds
@@ -46,8 +50,10 @@ source("R/utils_logging.R", local = FALSE)
 #      GitHub Pages. Executar 06 após qualquer atualização do pipeline.)
 #
 # Cache do CV (03_projecao.R):
-#   A seleção de modelos usa metadata com hashes dos insumos, parâmetros e do
-#   script. O cache é reutilizado apenas quando a assinatura continua válida.
+#   A seleção usa CV two-stage expanding-window (h=1/2/3, MASE ponderado).
+#   A metadata inclui hashes dos insumos, parâmetros e do script — o cache
+#   é reutilizado apenas quando a assinatura continua válida.
+#   Schema: CACHE_SCHEMA_VERSION = "bloco4_v1" (R/config.R).
 # ==============================================================================
 
 scripts <- c(
