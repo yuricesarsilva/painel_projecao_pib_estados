@@ -43,6 +43,7 @@ O painel permite visualizar:
 ```
 .
 ├── R/
+│   ├── 00_download_ibge.R       # Download automático do FTP IBGE e SIDRA (opcional)
 │   ├── 01_leitura_dados.R       # Leitura e organização dos dados brutos
 │   ├── 02_consistencia.R        # Verificação de identidades contábeis
 │   ├── 03_projecao.R            # Modelagem e projeção (~1.089 séries, 7 modelos)
@@ -128,8 +129,33 @@ As séries de volume e deflator são apresentadas como índices com **base 100 =
 ### Pré-requisitos
 
 - R ≥ 4.2
-- Pacotes: `tidyverse`, `forecast`, `readxl`, `openxlsx`
-- Dados brutos do IBGE em `base_bruta/` (não incluídos no repositório)
+- Pacotes gerenciados via `renv` — restaure o ambiente com `renv::restore()`
+- Dados brutos do IBGE em `base_bruta/` (não incluídos no repositório — veja abaixo como baixar)
+
+### Download automático dos dados brutos
+
+O script `R/00_download_ibge.R` baixa os arquivos do FTP do IBGE e a tabela 5938 do SIDRA automaticamente. Execute-o diretamente quando quiser atualizar a base:
+
+```r
+source("R/00_download_ibge.R")
+```
+
+O script:
+1. Baixa os ZIPs de Especiais e Conta da Produção do FTP do IBGE
+2. Extrai os arquivos em `base_bruta/`
+3. Baixa PIB + impostos + VAB por UF do SIDRA (tabela 5938)
+4. Valida os dados baixados contra a base atual (desvio máximo: 0,1%)
+5. Grava o status em `painel/data/status_dados.json` (visível no footer do painel)
+
+Em caso de falha, um código de erro é gravado no JSON antes de interromper:
+
+| Código | Situação |
+|--------|----------|
+| `E01` | URL 404 — IBGE pode ter mudado o caminho do FTP |
+| `E02` | Timeout ou falha de rede |
+| `E03` | Dados inconsistentes com a base atual (possível revisão do IBGE) |
+| `E04` | ZIP corrompido ou falha na extração |
+| `E05` | SIDRA indisponível ou parâmetros inválidos |
 
 ### Pipeline completo
 
@@ -137,9 +163,17 @@ As séries de volume e deflator são apresentadas como índices com **base 100 =
 source("R/run_all.R")
 ```
 
+Para baixar os dados do IBGE e rodar o pipeline em sequência:
+
+```r
+DOWNLOAD_ANTES_DE_RODAR <- TRUE
+source("R/run_all.R")
+```
+
 ### Etapas individuais
 
 ```r
+source("R/00_download_ibge.R")   # Download FTP + SIDRA (opcional)
 source("R/01_leitura_dados.R")   # ~2 min
 source("R/02_consistencia.R")    # ~1 min
 source("R/03_projecao.R")        # ~20–40 min (1ª vez; usa cache nas seguintes)
