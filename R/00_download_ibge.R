@@ -329,9 +329,22 @@ if (dir.exists(dir_esp_antigo))  unlink(dir_esp_antigo, recursive = TRUE)
 if (dir.exists(dir_cp_antigo))   unlink(dir_cp_antigo,  recursive = TRUE)
 if (file.exists(sidra_antigo))   unlink(sidra_antigo)
 
-file.rename(dir_esp_novo, dir_esp_antigo)
-file.rename(dir_cp_novo,  dir_cp_antigo)
-file.rename(sidra_path_novo, sidra_antigo)
+mover_item <- function(src, dst) {
+  ok <- suppressWarnings(file.rename(src, dst))
+  if (!isTRUE(ok)) {
+    if (dir.exists(src)) {
+      file.copy(src, dirname(dst), recursive = TRUE, overwrite = TRUE)
+      unlink(src, recursive = TRUE)
+    } else {
+      file.copy(src, dst, overwrite = TRUE)
+      unlink(src)
+    }
+  }
+}
+
+mover_item(dir_esp_novo,    dir_esp_antigo)
+mover_item(dir_cp_novo,     dir_cp_antigo)
+mover_item(sidra_path_novo, sidra_antigo)
 
 # Limpar pasta temporária
 unlink(dir_novo, recursive = TRUE)
