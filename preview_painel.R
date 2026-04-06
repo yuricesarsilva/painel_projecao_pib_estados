@@ -1,11 +1,67 @@
 args <- commandArgs(trailingOnly = TRUE)
 
 projeto <- normalizePath(".", winslash = "/", mustWork = TRUE)
-quarto <- "C:/Program Files/RStudio/resources/app/bin/quarto/bin/quarto.exe"
-r_home <- "C:/Program Files/R/R-4.4.0"
-r_bin <- file.path(r_home, "bin")
 rprofile <- file.path(projeto, ".Rprofile")
-activate <- file.path(projeto, "renv/activate.R")
+renv_lib <- file.path(projeto, "renv", "library", "windows", "R-4.4", "x86_64-w64-mingw32")
+
+find_quarto <- function() {
+  candidates <- c(
+    Sys.which("quarto"),
+    "C:/Program Files/Quarto/bin/quarto.exe",
+    "C:/Program Files/RStudio/resources/app/bin/quarto/bin/quarto.exe"
+  )
+  candidates <- unique(normalizePath(candidates[nzchar(candidates)], winslash = "/", mustWork = FALSE))
+  match <- candidates[file.exists(candidates)][1]
+
+  if (is.na(match)) {
+    stop(
+      "Quarto nao encontrado. Instale o Quarto CLI ou use uma instalacao do RStudio com Quarto embutido.",
+      call. = FALSE
+    )
+  }
+
+  match
+}
+
+find_rscript <- function() {
+  command <- Sys.which("Rscript")
+  if (nzchar(command)) {
+    return(normalizePath(command, winslash = "/", mustWork = TRUE))
+  }
+
+  user_r <- file.path(Sys.getenv("LOCALAPPDATA"), "Programs", "R")
+  candidates <- character()
+  if (dir.exists(user_r)) {
+    found <- list.files(
+      user_r,
+      pattern = "^Rscript\\.exe$",
+      recursive = TRUE,
+      full.names = TRUE,
+      ignore.case = TRUE
+    )
+    candidates <- c(found, candidates)
+  }
+
+  candidates <- c(
+    candidates,
+    "C:/Program Files/R/R-4.4.0/bin/Rscript.exe",
+    "C:/Program Files/R/R-4.4.0/bin/x64/Rscript.exe"
+  )
+
+  candidates <- unique(normalizePath(candidates, winslash = "/", mustWork = FALSE))
+  match <- candidates[file.exists(candidates)][1]
+
+  if (is.na(match)) {
+    stop("Rscript nao encontrado. Instale o R 4.4.x ou adicione o Rscript ao PATH.", call. = FALSE)
+  }
+
+  match
+}
+
+quarto <- find_quarto()
+rscript <- find_rscript()
+r_bin <- dirname(rscript)
+r_home <- dirname(r_bin)
 
 if (!file.exists(quarto)) {
   stop("Quarto nao encontrado em '", quarto, "'.", call. = FALSE)
@@ -19,12 +75,11 @@ if (!file.exists(rprofile)) {
   stop(".Rprofile nao encontrado em '", rprofile, "'.", call. = FALSE)
 }
 
-if (!file.exists(activate)) {
-  stop("renv/activate.R nao encontrado em '", activate, "'.", call. = FALSE)
+if (!dir.exists(renv_lib)) {
+  stop("Biblioteca local do renv nao encontrada em '", renv_lib, "'.", call. = FALSE)
 }
 
-source(activate, local = FALSE)
-renv_lib <- normalizePath(.libPaths()[1], winslash = "/", mustWork = TRUE)
+renv_lib <- normalizePath(renv_lib, winslash = "/", mustWork = TRUE)
 
 env_antigo <- Sys.getenv(
   c("R_PROFILE_USER", "R_LIBS_USER", "RENV_PROJECT", "R_HOME", "PATH"),

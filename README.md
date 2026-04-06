@@ -202,10 +202,10 @@ Sem alterar `painel/painel.qmd`, é possível abrir um preview local nativo do a
 .\preview_painel_local.ps1
 ```
 
-Ou, se preferir chamar o R diretamente:
+Ou, se preferir chamar o R diretamente e o `Rscript` estiver no `PATH`:
 
 ```powershell
-& "C:\Program Files\R\R-4.4.0\bin\Rscript.exe" .\preview_painel_local.R
+Rscript .\preview_painel_local.R
 ```
 
 Esse helper reaproveita o bloco `shinylive-r` de `painel/painel.qmd`, mas serve `painel/data/` e `painel/metodologia.html` localmente via `shiny`, sem modificar o arquivo do painel.
