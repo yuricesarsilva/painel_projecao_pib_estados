@@ -584,8 +584,7 @@ if (!is.null(params_mod)) {
           paste0("Macro: ", coalesce(rotulos_macro[macrossetor], macrossetor)),
         TRUE ~ NA_character_
       ),
-      mase_melhor = round(mase_melhor, 4),
-      rmse_melhor = round(rmse_melhor, 6)
+      mase_ponderado = round(mase_ponderado, 4)
     ) |>
     select(
       `Unidade Geografica` = geo,
@@ -593,8 +592,7 @@ if (!is.null(params_mod)) {
       `Variavel`           = variavel_lbl,
       `Modelo`             = modelo,
       `Parametros`         = parametros,
-      `MASE`               = mase_melhor,
-      `RMSE`               = rmse_melhor
+      `MASE pond.`         = mase_ponderado
     ) |>
     arrange(`Unidade Geografica`, `Setor/Atividade`, `Variavel`)
   addWorksheet(wb, "Selecao_Modelos")
@@ -607,10 +605,10 @@ if (!is.null(params_mod)) {
   addStyle(wb, "Selecao_Modelos", st_header,
            rows = 2, cols = 1:ncol(tab_modelos), gridExpand = TRUE)
   addStyle(wb, "Selecao_Modelos", st_num,
-           rows = 3:(2 + nrow(tab_modelos)), cols = 6:7, gridExpand = TRUE)
+           rows = 3:(2 + nrow(tab_modelos)), cols = 6L, gridExpand = TRUE)
   freezePane(wb, "Selecao_Modelos", firstActiveRow = 3L, firstActiveCol = 2L)
   setColWidths(wb, "Selecao_Modelos", cols = 1:5, widths = c(22, 24, 28, 14, 28))
-  setColWidths(wb, "Selecao_Modelos", cols = 6:7, widths = c(10, 12))
+  setColWidths(wb, "Selecao_Modelos", cols = 6L, widths = 10)
 }
 
 saveWorkbook(wb, "output/tabelas/projecoes_pib_estadual.xlsx", overwrite = TRUE)
