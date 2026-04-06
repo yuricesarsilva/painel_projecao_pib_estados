@@ -11,10 +11,15 @@ contábil impostas por benchmarking top-down.
 ## Fluxo de dados
 
 ```
+[FTP IBGE / SIDRA tabela 5938]
+        │
+        ▼ 00_download_ibge.R  (opcional — ativa com DOWNLOAD_ANTES_DE_RODAR)
 base_bruta/
-  Conta_da_Producao_2002_2023_xls/   ← 33 arquivos Excel (IBGE)
-  Especiais_2002_2023_xls/           ← tab01–tab07 (IBGE)
-  PIB e Impostos (SIDRA).xlsx        ← impostos por UF (SIDRA/IBGE)
+  Conta_da_Producao_{ANO_INI}_{ANO_FIM}_xls/  ← 33 arquivos Excel (IBGE)
+  Especiais_{ANO_INI}_{ANO_FIM}_xls/          ← tab01–tab07 (IBGE)
+  PIB e Impostos (SIDRA).xlsx                 ← PIB + impostos + VAB por UF
+painel/data/
+  status_dados.json    ← status do último download (ok / erro + código)
         │
         ▼ 01_leitura_dados.R
 dados/
@@ -67,6 +72,7 @@ dados/
 | `R/utils_cache.R` | Cache com invalidação por hash MD5 | — | funções `criar_metadata_cache`, `cache_valido`, `salvar_cache_com_metadata` | < 1 s |
 | `R/utils_logging.R` | Logging estruturado por execução | — | funções `inicializar_log_execucao`, `registrar_evento_log`, `salvar_log_execucao` | < 1 s |
 | `R/run_all.R` | Orquestra o pipeline completo | config.R, utils | — | depende dos scripts |
+| `R/00_download_ibge.R` | Download automático do FTP IBGE e SIDRA (opcional) | config.R | base_bruta/, painel/data/status_dados.json | ~2–5 min |
 | `R/01_leitura_dados.R` | Lê todos os dados brutos | base_bruta/ | dados/*.rds | ~2 min |
 | `R/02_consistencia.R` | Verifica 5 identidades contábeis | dados/especiais.rds | dados/consistencia.rds, `qa_status` no `.GlobalEnv` | ~1 min |
 | `R/03_projecao.R` | CV two-stage + 7 modelos + projeção | dados/especiais.rds, dados/conta_producao.rds | dados/selecao_modelos.rds, dados/projecoes_brutas.rds, ... | ~20–40 min (1ª vez) |
@@ -97,6 +103,11 @@ automaticamente todos os scripts que dependem dele.
 | `MAX_FALLBACK_PCT` | 0.10 | Limite máximo de séries com fallback (10%) |
 | `SEED_GLOBAL` | 12345 | Semente global para reprodutibilidade |
 | `CACHE_SCHEMA_VERSION` | "bloco4_v1" | Identificador do schema de cache |
+| `IBGE_FTP_BASE` | `https://ftp.ibge.gov.br/Contas_Regionais` | URL raiz do FTP IBGE |
+| `SIDRA_TABELA_ID` | 5938 | Tabela SIDRA (PIB + impostos + VAB por UF) |
+| `DOWNLOAD_DIR` | `"base_bruta"` | Pasta de destino do download |
+| `STATUS_JSON_PATH` | `"painel/data/status_dados.json"` | Arquivo de status do download |
+| `TOL_VALIDACAO_DOWNLOAD` | 0.001 | Desvio máximo aceito na validação cruzada (0,1%) |
 
 ---
 
@@ -134,14 +145,20 @@ ambos têm a mesma atividade (ex: agropecuária existe como macrossetor e como a
 ## Fluxo de publicação do painel
 
 ```
-1. Executar pipeline local:
+1. (Opcional) Baixar dados atualizados do IBGE:
+      source("R/00_download_ibge.R")
+   Ou integrado ao pipeline:
+      DOWNLOAD_ANTES_DE_RODAR <- TRUE
       source("R/run_all.R")
 
-2. Versionar os CSVs gerados:
+2. Executar pipeline local (sem download):
+      source("R/run_all.R")
+
+4. Versionar os CSVs gerados:
       git add painel/data/*.csv
       git commit -m "Atualiza: rebuild analítico YYYY-MM-DD"
 
-3. Push para main:
+5. Push para main:
       git push origin main
 
 4. GitHub Actions (publish-painel.yml) dispara automaticamente:

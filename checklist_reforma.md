@@ -136,6 +136,11 @@
 - [x] Documentar pacotes necessários (httr2, sidrar, jsonlite, openxlsx)
 - [x] Instalar pacotes novos e atualizar `renv.lock` (httr2 1.2.2, sidrar 0.2.9, rjson 0.2.23)
 
+### Documentação do Bloco 6
+
+- [x] Atualizar `README.md` com seção de download automático e flag `DOWNLOAD_ANTES_DE_RODAR`
+- [x] Atualizar `docs/arquitetura.md` com `00_download_ibge.R`, novos parâmetros de config e fluxo de publicação
+
 ---
 
 ## Fase futura - Fora do escopo atual
