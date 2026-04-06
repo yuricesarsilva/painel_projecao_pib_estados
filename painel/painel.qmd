@@ -472,7 +472,7 @@ server <- function(input, output, session) {
                                " + Projeção ", ANO_HIST_FIM + 1L, "–", ano_max(),
                                " com IC 95%"),
              x = "", y = unidade,
-             caption = "Fonte: IBGE (histórico); projeção própria (2024–2031).") +
+             caption = "Fonte: IBGE (histórico); projeção própria.") +
         tema_base
   })
 
