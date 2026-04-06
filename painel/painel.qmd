@@ -423,7 +423,13 @@ server <- function(input, output, session) {
       filter(geo == input$geo)
   })
 
-  ano_max <- reactive({ ANO_HIST_FIM + H_PAINEL })
+  ano_max <- reactive({
+    n_proj <- input$n_proj
+    if (is.null(n_proj) || is.na(n_proj)) {
+      n_proj <- H_PAINEL
+    }
+    ANO_HIST_FIM + as.integer(n_proj)
+  })
 
   # Dados filtrados
   dados_serie <- reactive({
