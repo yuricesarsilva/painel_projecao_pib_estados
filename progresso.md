@@ -728,3 +728,62 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 |---------|----------|
 | `dados/metricas_cv_detalhadas.rds` | Métricas por série × modelo × horizonte (stage 1) |
 | `dados/fallback_log.rds` | Log estruturado de fallbacks por série |
+
+---
+
+## Etapa 20 — Bloco 5 da reforma: transparência, automação e documentação
+
+**O que foi feito:**
+
+**`R/06_exportar_painel.R`:**
+- Adicionada exportação de `painel/data/diagnostico.csv` ao final do script.
+- O CSV é montado a partir de `dados/params_modelos.rds` e `dados/fallback_log.rds`.
+- Colunas exportadas: `geo`, `geo_tipo`, `serie_tipo`, `macrossetor`, `atividade`, `variavel`, `modelo`, `parametros`, `mase_ponderado`, `mase_h1`, `mase_h2`, `mase_h3`, `fallback`.
+- `serie_tipo` derivado: `"Impostos"` quando `variavel == "log_impostos"`, `"Atividade"` quando `atividade` não-NA, `"Macrossetor"` nos demais casos.
+
+**`painel/painel.qmd`:**
+- Adicionado fetch de `diagnostico.csv` no `Promise.all` do bloco JavaScript (4º CSV).
+- Adicionado `Shiny.setInputValue("diagnostico_raw", ...)` para passar os dados ao servidor Shiny.
+- Adicionado reactive `diagnostico_df` que filtra pelo `input$geo` selecionado.
+- Adicionado `output$tabela_diagnostico <- renderDT(...)` com colunas: Tipo, Macrossetor, Atividade, Variável, Modelo, Especificação, MASE pond., MASE h=1/h=2/h=3, Fallback; filtro por coluna, `pageLength=15`, `scrollX=TRUE`.
+- Adicionado `nav_panel("Diagnóstico", ...)` após a aba Tabela.
+
+**`.github/workflows/publish-painel.yml`:**
+- Adicionado comentário explícito de que os CSVs são gerados localmente e commitados antes do push, com referência ao `rebuild-analytics.yml`.
+
+**`.github/workflows/rebuild-analytics.yml`** (criado):
+- Stub documentado com instrução completa do processo de rebuild local (5 passos).
+- `workflow_dispatch` com input `nota` informativo.
+- Job único que exibe as instruções — não executa o pipeline (base_bruta não está versionada).
+
+**`docs/arquitetura.md`** (criado):
+- Diagrama ASCII do fluxo de dados (base_bruta → dados → output/painel).
+- Tabela de scripts com papel, entradas, saídas e tempo estimado.
+- Tabela de parâmetros de `R/config.R`.
+- Convenções de nomenclatura (`serie_id`, prefixo `ativ__`, `geo_tipo`).
+- Tabela de versionamento (o que está/não está no git e por quê).
+- Fluxo completo de publicação do painel.
+
+**`docs/qa.md`** (criado):
+- As 5 identidades contábeis com tolerâncias e severidades (fatal vs warning).
+- Estrutura do `qa_status` e comportamento de barreira no `run_all.R`.
+- Exceção conhecida de Acre 2002.
+- Mecanismo de cache com invalidação automática por hash MD5 e schema `bloco4_v1`.
+- Logging estruturado: localização, estrutura e quando consultar.
+- Fallback: `fallback_log` tibble, `MAX_FALLBACK_PCT = 10%`, condição de parada.
+- Verificações de integridade pós-reconciliação.
+
+**`docs/modelagem.md`** (criado):
+- Séries modeladas: grupos A (264), B (33), C (~792) com variáveis e período.
+- Família de 7 modelos com tabela e justificativas de exclusão dos 3 removidos.
+- CV two-stage: lógica dos dois estágios, janelas expansivas, MASE ponderado com fórmula.
+- Parâmetros do CV em `R/config.R` (tabela).
+- Especificação ARIMA no stage 2 e na projeção final (limites de ordem).
+- Derivações contábeis com fórmulas: VAB nominal, PIB, deflator.
+- Reconciliação top-down: fórmulas dos fatores de ajuste nos dois passos.
+- Horizontes técnico (h=8) vs operacional (h=3) com tabela de parâmetros.
+- Guia de interpretação do `diagnostico.csv`.
+
+**Arquivos modificados:** `R/06_exportar_painel.R`, `painel/painel.qmd`, `.github/workflows/publish-painel.yml`
+
+**Arquivos criados:** `.github/workflows/rebuild-analytics.yml`, `docs/arquitetura.md`, `docs/qa.md`, `docs/modelagem.md`

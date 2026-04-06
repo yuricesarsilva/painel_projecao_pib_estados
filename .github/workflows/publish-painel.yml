@@ -40,7 +40,11 @@ jobs:
         with:
           version: "release"
 
-      # Renderizar o painel (CSVs já estão em painel/data/ versionados no repo)
+      # CSVs em painel/data/ são gerados localmente via R/run_all.R e
+      # commitados antes do push. Ver .github/workflows/rebuild-analytics.yml
+      # para o processo de rebuild analítico e instruções de atualização.
+
+      # Renderizar o painel
       - name: Renderizar painel Quarto
         run: cd painel && quarto render painel.qmd --output-dir _site
 

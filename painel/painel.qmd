@@ -204,11 +204,13 @@ ui <- page_sidebar(
       Promise.all([
         fetch(base + "/serie_principal.csv").then(function(r) { return r.text(); }),
         fetch(base + "/vab_macrossetor.csv").then(function(r) { return r.text(); }),
-        fetch(base + "/vab_atividade.csv").then(function(r) { return r.text(); })
+        fetch(base + "/vab_atividade.csv").then(function(r) { return r.text(); }),
+        fetch(base + "/diagnostico.csv").then(function(r) { return r.text(); })
       ]).then(function(results) {
-        Shiny.setInputValue("serie_raw",    results[0], {priority: "event"});
-        Shiny.setInputValue("vab_mac_raw",  results[1], {priority: "event"});
-        Shiny.setInputValue("vab_ativ_raw", results[2], {priority: "event"});
+        Shiny.setInputValue("serie_raw",        results[0], {priority: "event"});
+        Shiny.setInputValue("vab_mac_raw",      results[1], {priority: "event"});
+        Shiny.setInputValue("vab_ativ_raw",     results[2], {priority: "event"});
+        Shiny.setInputValue("diagnostico_raw",  results[3], {priority: "event"});
       }).catch(function(e) {
         var msg = (e && e.message) ? e.message : String(e);
         Shiny.setInputValue("data_load_error", msg, {priority: "event"});
@@ -363,6 +365,11 @@ ui <- page_sidebar(
       card(full_screen = TRUE,
         card_header("Dados numéricos"),
         DTOutput("tabela_dados"))
+    ),
+    nav_panel("Diagnóstico",
+      card(full_screen = TRUE,
+        card_header("Seleção de modelos e métricas CV — território selecionado na sidebar"),
+        DTOutput("tabela_diagnostico"))
     )
   )
 )
@@ -403,6 +410,11 @@ server <- function(input, output, session) {
   vab_ativ <- reactive({
     req(input$vab_ativ_raw)
     read.csv(textConnection(input$vab_ativ_raw), na.strings = "")
+  })
+  diagnostico_df <- reactive({
+    req(input$diagnostico_raw)
+    read.csv(textConnection(input$diagnostico_raw), na.strings = "") |>
+      filter(geo == input$geo)
   })
 
   ano_max <- reactive({ ANO_HIST_FIM + H_PAINEL })
@@ -650,6 +662,32 @@ server <- function(input, output, session) {
                      dom = "t",
                      columnDefs = list(list(className = "dt-right", targets = "_all"))),
       rownames = FALSE)
+  })
+}
+
+  # ---- Aba Diagnóstico ---------------------------------------------------------
+  output$tabela_diagnostico <- renderDT({
+    d <- diagnostico_df() |>
+      mutate(across(c(mase_ponderado, mase_h1, mase_h2, mase_h3),
+                    ~ round(.x, 3))) |>
+      select(
+        Tipo        = serie_tipo,
+        Macrossetor = macrossetor,
+        Atividade   = atividade,
+        `Variável`  = variavel,
+        Modelo      = modelo,
+        `Especificação` = parametros,
+        `MASE pond.`    = mase_ponderado,
+        `MASE h=1`      = mase_h1,
+        `MASE h=2`      = mase_h2,
+        `MASE h=3`      = mase_h3,
+        Fallback        = fallback
+      )
+    datatable(d,
+      filter   = "top",
+      rownames = FALSE,
+      options  = list(pageLength = 15, scrollX = TRUE,
+                      dom = "lfrtip"))
   })
 }
 

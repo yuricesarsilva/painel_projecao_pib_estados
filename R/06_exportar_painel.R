@@ -475,4 +475,39 @@ exportar_workbook_painel(
 
 message("  projecoes_painel_h3.xlsx: cópia estrutural do h=8 no horizonte público 2024–2026")
 
+# ==============================================================================
+# CSV de diagnóstico dos modelos
+# Uma linha por série: modelo vencedor, métricas CV, status de fallback
+# ==============================================================================
+
+message("\nExportando diagnóstico dos modelos...")
+
+params <- readRDS("dados/params_modelos.rds")
+fb     <- readRDS("dados/fallback_log.rds")
+
+diagnostico <- params |>
+  mutate(
+    serie_tipo = case_when(
+      variavel == "log_impostos" ~ "Impostos",
+      !is.na(atividade)          ~ "Atividade",
+      TRUE                       ~ "Macrossetor"
+    )
+  ) |>
+  left_join(
+    fb |> distinct(serie_id) |> mutate(fallback = TRUE),
+    by = "serie_id"
+  ) |>
+  mutate(fallback = coalesce(fallback, FALSE)) |>
+  rename(
+    mase_h1 = mase_venc_h1,
+    mase_h2 = mase_venc_h2,
+    mase_h3 = mase_venc_h3
+  ) |>
+  select(geo, geo_tipo, serie_tipo, macrossetor, atividade, variavel,
+         modelo, parametros, mase_ponderado, mase_h1, mase_h2, mase_h3,
+         fallback)
+
+write_csv(diagnostico, "painel/data/diagnostico.csv")
+message("  diagnostico.csv: ", nrow(diagnostico), " séries")
+
 message("\n06_exportar_painel.R concluído. CSVs em painel/data/")

@@ -1,0 +1,46 @@
+name: Rebuild Analítico (stub — execução local obrigatória)
+
+# STUB — este workflow não executa o pipeline ainda.
+# base_bruta/ não está versionada; a automação de download direto
+# do IBGE está planejada para uma fase futura do projeto.
+#
+# Para rebuild local:
+#   1. Garantir que base_bruta/ está atualizada com os dados do IBGE
+#   2. Abrir R a partir da raiz do projeto:
+#        source("R/run_all.R")
+#   3. Após conclusão, versionar os CSVs gerados:
+#        git add painel/data/*.csv
+#        git commit -m "Atualiza: rebuild analítico YYYY-MM-DD"
+#        git push origin main
+#   4. O workflow publish-painel.yml dispara automaticamente no push
+#      e republica o painel no GitHub Pages.
+#
+# Fase futura planejada:
+#   - Download automático das Contas Regionais do IBGE
+#   - Download via API SIDRA (pacote sidrar) para impostos
+#   - Trigger anual automático após publicação das Contas Regionais
+
+on:
+  workflow_dispatch:
+    inputs:
+      nota:
+        description: "Motivo do rebuild (informativo)"
+        required: false
+        default: "Rebuild manual"
+
+jobs:
+  instrucoes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exibir instrucoes de rebuild local
+        run: |
+          echo "======================================================="
+          echo "Rebuild analítico requer base_bruta/ disponível localmente."
+          echo "Execute o pipeline no seu ambiente local:"
+          echo "  1. source('R/run_all.R')"
+          echo "  2. git add painel/data/*.csv"
+          echo "  3. git commit -m 'Atualiza: rebuild analitico'"
+          echo "  4. git push origin main"
+          echo ""
+          echo "Nota informativa: ${{ github.event.inputs.nota }}"
+          echo "======================================================="

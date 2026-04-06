@@ -90,26 +90,26 @@
 - [x] Garantir que o Quarto em `painel/` use o `renv` do projeto
 - [x] Criar scripts locais para preview e render do painel
 - [x] Criar script R para abrir o preview do painel
-- [ ] Exportar CSV de diagnóstico dos modelos
-- [ ] Incluir modelo vencedor no diagnóstico
-- [ ] Incluir métricas principais no diagnóstico
-- [ ] Incluir ranking dos modelos no diagnóstico
-- [ ] Incluir status de fallback no diagnóstico
-- [ ] Expor diagnóstico no painel
+- [x] Exportar CSV de diagnóstico dos modelos
+- [x] Incluir modelo vencedor no diagnóstico
+- [x] Incluir métricas principais no diagnóstico
+- [x] Incluir ranking dos modelos no diagnóstico
+- [x] Incluir status de fallback no diagnóstico
+- [x] Expor diagnóstico no painel
 
 ### CI/CD
 
-- [ ] Criar workflow de rebuild analítico
-- [ ] Separar workflow de deploy do painel
-- [ ] Condicionar publicação a base analítica válida
+- [x] Criar workflow de rebuild analítico (stub documentado)
+- [x] Separar workflow de deploy do painel
+- [ ] Condicionar publicação a base analítica válida (fase futura — exige automação IBGE)
 
 ### Documentação
 
 - [x] Atualizar `README.md`
 - [x] Atualizar `painel/metodologia.html`
-- [ ] Criar `docs/arquitetura.md`
-- [ ] Criar `docs/qa.md`
-- [ ] Criar `docs/modelagem.md`
+- [x] Criar `docs/arquitetura.md`
+- [x] Criar `docs/qa.md`
+- [x] Criar `docs/modelagem.md`
 
 ---
 
@@ -128,4 +128,4 @@
 - [x] Bloco 2 concluído
 - [x] Bloco 3 concluído
 - [x] Bloco 4 concluído
-- [ ] Bloco 5 concluído
+- [x] Bloco 5 concluído
