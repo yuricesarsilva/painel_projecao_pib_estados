@@ -143,8 +143,13 @@ baixar_zip(url_cp,  zip_cp)
 # ==============================================================================
 
 message("Extraindo ZIPs...")
-extrair_zip(zip_esp, dir_novo)
-extrair_zip(zip_cp,  dir_novo)
+# Extrair cada ZIP para seu próprio subdiretório, reproduzindo a estrutura de base_bruta/
+dir_esp_novo <- file.path(dir_novo, nome_esp)
+dir_cp_novo  <- file.path(dir_novo, nome_cp)
+dir.create(dir_esp_novo, showWarnings = FALSE)
+dir.create(dir_cp_novo,  showWarnings = FALSE)
+extrair_zip(zip_esp, dir_esp_novo)
+extrair_zip(zip_cp,  dir_cp_novo)
 
 # Remover ZIPs após extração
 unlink(zip_esp)
@@ -161,61 +166,82 @@ message("Baixando SIDRA tabela ", SIDRA_TABELA_ID, " (impostos por UF)...")
 #   513 — Impostos, líquidos de subsídios (R$ milhares)
 #   6293— VAB a preços correntes (R$ milhares)
 # Nível geográfico: Estados (N3) + Regiões (N2) + Brasil (N1)
-sidra_raw <- tryCatch({
-  # Brasil
-  br <- get_sidra(
-    api = paste0("/t/5938/n1/all/v/37,513,6293/p/",
-                 paste(ANO_HIST_INI:ANO_HIST_FIM, collapse = ","))
-  )
-  # Regiões
-  regs <- get_sidra(
-    api = paste0("/t/5938/n2/all/v/37,513,6293/p/",
-                 paste(ANO_HIST_INI:ANO_HIST_FIM, collapse = ","))
-  )
-  # Estados
-  ufs <- get_sidra(
-    api = paste0("/t/5938/n3/all/v/37,513,6293/p/",
-                 paste(ANO_HIST_INI:ANO_HIST_FIM, collapse = ","))
-  )
-  bind_rows(br, regs, ufs)
-}, error = function(e) parar_com_codigo("E05", conditionMessage(e)))
+periodos <- as.character(ANO_HIST_INI:ANO_HIST_FIM)
 
-# Transformar para formato wide (geo × ano × pib/impostos/vab)
-sidra_wide <- sidra_raw |>
-  select(
-    geo  = `Unidade da Federação`,
-    ano  = `Ano`,
-    var  = `Variável`,
-    valor = Valor
-  ) |>
-  mutate(
-    ano   = as.integer(ano),
-    valor = as.numeric(valor)
-  ) |>
-  pivot_wider(names_from = var, values_from = valor)
+# Variáveis da tabela 5938 (códigos SIDRA):
+#   37  — PIB a preços correntes
+#   543 — Impostos líquidos de subsídios sobre produtos
+#   498 — VAB a preços correntes total
+# Nota: cada nível geográfico retorna coluna de nome diferente
+# ("Brasil", "Grande Região", "Unidade da Federação") — normalizar antes do bind_rows
+
+colunas_padrao_sidra <- c(
+  "Nível Territorial (Código)", "Nível Territorial",
+  "Unidade de Medida (Código)", "Unidade de Medida",
+  "Ano (Código)", "Ano", "Variável (Código)", "Variável", "Valor"
+)
+
+normalizar_sidra <- function(df) {
+  # Identifica a coluna de geo: a única que não é padrão e não termina em " (Código)"
+  cols_codigo <- grep("\\(Código\\)$", names(df), value = TRUE)
+  col_geo <- setdiff(names(df), c(colunas_padrao_sidra, cols_codigo))
+  col_geo <- col_geo[1]
+  df |>
+    select(geo = all_of(col_geo), ano = Ano, var = `Variável`, valor = Valor) |>
+    mutate(ano = as.integer(ano), valor = as.numeric(valor))
+}
+
+sidra_wide <- tryCatch({
+  br   <- normalizar_sidra(get_sidra(5938L, variable = c(37L, 543L, 498L),
+                                     period = periodos, geo = "Brazil"))
+  regs <- normalizar_sidra(get_sidra(5938L, variable = c(37L, 543L, 498L),
+                                     period = periodos, geo = "Region"))
+  ufs  <- normalizar_sidra(get_sidra(5938L, variable = c(37L, 543L, 498L),
+                                     period = periodos, geo = "State"))
+  bind_rows(br, regs, ufs) |>
+    pivot_wider(names_from = var, values_from = valor)
+}, error = function(e) parar_com_codigo("E05", conditionMessage(e)))
 
 # Salvar como XLSX (reproduzindo a estrutura esperada por 01_leitura_dados.R)
 # Aba 1 = PIB, Aba 2 = Impostos  (convenção do arquivo SIDRA original)
 sidra_path_novo <- file.path(dir_novo, "PIB e Impostos (SIDRA).xlsx")
 
+# Identificar colunas de PIB e impostos pelo padrão do nome
+col_pib <- grep("(?i)produto interno bruto a pre", names(sidra_wide), value = TRUE, perl = TRUE)[1]
+col_imp <- grep("(?i)impostos.*l.quidos",          names(sidra_wide), value = TRUE, perl = TRUE)[1]
+message("Coluna PIB: ", col_pib)
+message("Coluna Impostos: ", col_imp)
+
+# O reader (ler_especial_simples) lê com col_names=FALSE e espera:
+#   Linha 4: células 2..(N_ANOS+1) = anos (2002..ANO_HIST_FIM)
+#   Linhas 5..37: célula 1 = geo, células 2..(N_ANOS+1) = valores
+# Usa startRow para escrever na linha exata — linhas 1-3 ficam vazias.
+anos_vec <- sort(unique(sidra_wide$ano))
+
+escrever_aba_sidra <- function(wb, sheet_name, col_valor) {
+  vals_wide <- sidra_wide |>
+    select(geo, ano, valor = all_of(col_valor)) |>
+    pivot_wider(names_from = ano, values_from = valor)
+
+  # Linhas 1-3: preenchimento para que read_xls não as salte (readxl ignora
+  # linhas inicialmente vazias e desloca a numeração)
+  n_cols <- length(anos_vec) + 1L
+  filler <- as.data.frame(matrix(".", nrow = 3L, ncol = n_cols))
+  writeData(wb, sheet_name, filler, startRow = 1L, colNames = FALSE)
+
+  # Linha 4: NA na col 1, depois os anos
+  header_df <- as.data.frame(matrix(c(NA_real_, anos_vec), nrow = 1L))
+  writeData(wb, sheet_name, header_df, startRow = 4L, colNames = FALSE)
+
+  # Linhas 5+: dados (geo + valores)
+  writeData(wb, sheet_name, vals_wide, startRow = 5L, colNames = FALSE)
+}
+
 wb <- createWorkbook()
 addWorksheet(wb, "PIB")
 addWorksheet(wb, "Impostos")
-
-# Aba PIB: geo × ano (wide)
-pib_wide <- sidra_wide |>
-  select(geo, ano,
-         valor = matches("Produto interno bruto|PIB")) |>
-  pivot_wider(names_from = ano, values_from = valor)
-writeData(wb, "PIB", pib_wide)
-
-# Aba Impostos: geo × ano (wide)
-imp_wide <- sidra_wide |>
-  select(geo, ano,
-         valor = matches("Impostos|impostos")) |>
-  pivot_wider(names_from = ano, values_from = valor)
-writeData(wb, "Impostos", imp_wide)
-
+escrever_aba_sidra(wb, "PIB",      col_pib)
+escrever_aba_sidra(wb, "Impostos", col_imp)
 saveWorkbook(wb, sidra_path_novo, overwrite = TRUE)
 message("SIDRA salvo: ", sidra_path_novo)
 

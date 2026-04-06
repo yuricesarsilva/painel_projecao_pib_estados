@@ -828,4 +828,8 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 
 **Arquivos criados:** `R/00_download_ibge.R`
 
-**Pendente:** instalar `httr2`, `sidrar`, `openxlsx` no ambiente renv e rodar `renv::snapshot()` — feito manualmente pelo usuário na sessão R antes da primeira execução do script de download.
+**Correção aplicada:** `escrever_aba_sidra()` passou a escrever 3 linhas de preenchimento (`.`) nas linhas 1–3 do XLSX para evitar que `read_xls` saltasse linhas vazias e deslocasse a numeração. Com o ajuste, a linha 4 (anos) e as linhas 5–37 (dados geográficos) são lidas corretamente por `ler_especial_simples()`.
+
+**Validação executada:** `source("R/00_download_ibge.R")` concluiu sem erros — ZIPs baixados, SIDRA salvo, desvio máximo do PIB Brasil 0%, `painel/data/status_dados.json` gravado com `status = "ok"`.
+
+**Pacotes adicionados ao `renv.lock`:** `httr2` 1.2.2, `sidrar` 0.2.9, `rjson` 0.2.23.
