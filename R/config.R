@@ -24,7 +24,14 @@ PROJETO_CONFIG <- list(
   CACHE_DIR = "dados",
   CACHE_SCHEMA_VERSION = "bloco4_v1",
   CACHE_MODELOS_PATH = "dados/selecao_modelos.rds",
-  CACHE_MODELOS_META_PATH = "dados/selecao_modelos_meta.rds"
+  CACHE_MODELOS_META_PATH = "dados/selecao_modelos_meta.rds",
+
+  # Download IBGE
+  IBGE_FTP_BASE          = "https://ftp.ibge.gov.br/Contas_Regionais",
+  SIDRA_TABELA_ID        = 5938L,
+  DOWNLOAD_DIR           = "base_bruta",
+  STATUS_JSON_PATH       = "painel/data/status_dados.json",
+  TOL_VALIDACAO_DOWNLOAD = 0.001   # desvio máximo aceitável na validação (0,1%)
 )
 
 list2env(PROJETO_CONFIG, envir = .GlobalEnv)

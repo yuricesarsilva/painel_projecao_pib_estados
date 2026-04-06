@@ -56,6 +56,25 @@ source("R/utils_logging.R", local = FALSE)
 #   Schema: CACHE_SCHEMA_VERSION = "bloco4_v1" (R/config.R).
 # ==============================================================================
 
+# ==============================================================================
+# Etapa 0 — Download IBGE (opcional)
+#
+# Por padrão desativado — útil quando a base já está atualizada localmente.
+# Para ativar antes de rodar o pipeline:
+#   DOWNLOAD_ANTES_DE_RODAR <- TRUE
+#   source("R/run_all.R")
+# ==============================================================================
+if (!exists("DOWNLOAD_ANTES_DE_RODAR")) DOWNLOAD_ANTES_DE_RODAR <- FALSE
+
+if (isTRUE(DOWNLOAD_ANTES_DE_RODAR)) {
+  cat("\n", strrep("=", 70), "\n", sep = "")
+  cat("Etapa 0: Download IBGE\n")
+  cat(strrep("=", 70), "\n\n", sep = "")
+  registrar_evento_log("run_all", "INFO", "Etapa 0: iniciando download IBGE")
+  source("R/00_download_ibge.R", local = FALSE)
+  registrar_evento_log("run_all", "INFO", "Etapa 0: download IBGE concluido")
+}
+
 scripts <- c(
   "R/01_leitura_dados.R",
   "R/02_consistencia.R",

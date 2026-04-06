@@ -1,21 +1,22 @@
 library(tidyverse)
 library(readxl)
+source("R/config.R", local = FALSE)
 
 # ==============================================================================
 # 01_leitura_dados.R
 #
 # Lê todas as fontes brutas de dados e salva dois arquivos .rds em dados/.
 #
-# Fontes em base_bruta/:
-#   Especiais_2002_2023_xls/
-#     tab01.xls — PIB nominal (27 UFs + 5 regiões + Brasil, 2002–2023)
+# Fontes em base_bruta/ (caminhos derivados de ANO_HIST_INI e ANO_HIST_FIM em config.R):
+#   Especiais_{ANO_HIST_INI}_{ANO_HIST_FIM}_xls/
+#     tab01.xls — PIB nominal (27 UFs + 5 regiões + Brasil)
 #     tab03.xls — Série encadeada do volume do PIB (índice, base 2010=100)
 #     tab04.xls — VAB nominal total
 #     tab05.xls — Série encadeada do volume do VAB por atividade (13 abas)
-#   Conta_da_Producao_2002_2023_xls/
+#   Conta_da_Producao_{ANO_HIST_INI}_{ANO_HIST_FIM}_xls/
 #     Tabela1.xls a Tabela33.xls — VBP, CI e VAB por atividade:
 #       val_ano_ant, idx_volume, val_preco_ant, idx_preco, val_corrente
-#       (33 geos × 13 atividades × 3 blocos × 22 anos = 28.314 linhas)
+#       (33 geos × 13 atividades × 3 blocos × N_ANOS anos)
 #   PIB e Impostos (SIDRA).xlsx — impostos líquidos de subsídios nominais
 #     (em R$ mil → convertido para R$ milhões na leitura)
 #     Impostos faltantes (anos mais recentes sem cobertura SIDRA) são
@@ -39,8 +40,9 @@ library(readxl)
 # ==============================================================================
 
 BASE       <- "base_bruta"
-ESPECIAIS  <- file.path(BASE, "Especiais_2002_2023_xls")
-CONTA_PROD <- file.path(BASE, "Conta_da_Producao_2002_2023_xls")
+N_ANOS     <- ANO_HIST_FIM - ANO_HIST_INI + 1L
+ESPECIAIS  <- file.path(BASE, paste0("Especiais_",         ANO_HIST_INI, "_", ANO_HIST_FIM, "_xls"))
+CONTA_PROD <- file.path(BASE, paste0("Conta_da_Producao_", ANO_HIST_INI, "_", ANO_HIST_FIM, "_xls"))
 SIDRA      <- file.path(BASE, "PIB e Impostos (SIDRA).xlsx")
 
 # ==============================================================================
@@ -91,14 +93,14 @@ ATIV_MAP <- tibble(
 # ==============================================================================
 
 # Lê tab01–04 ou SIDRA: wide simples
-# L4 = anos (cols 2–23), L5–L37 = dados (33 entidades)
+# L4 = anos (cols 2..(N_ANOS+1)), L5–L37 = dados (33 entidades)
 ler_especial_simples <- function(arquivo, variavel, sheet = 1, xlsx = FALSE) {
   fn <- if (xlsx) read_xlsx else read_xls
   df <- fn(arquivo, sheet = sheet, col_names = FALSE, .name_repair = "minimal")
 
-  anos  <- as.numeric(df[4, 2:23])
+  anos  <- as.numeric(df[4, 2:(N_ANOS + 1L)])
 
-  df[5:37, 1:23] |>
+  df[5:37, 1:(N_ANOS + 1L)] |>
     set_names(c("geo", paste0("Y", anos))) |>
     mutate(across(everything(), as.character)) |>
     filter(!is.na(geo), !str_starts(geo, "Fonte")) |>
@@ -111,9 +113,9 @@ ler_especial_simples <- function(arquivo, variavel, sheet = 1, xlsx = FALSE) {
 ler_especial_atividade <- function(arquivo, aba, atividade) {
   df <- read_xls(arquivo, sheet = aba, col_names = FALSE, .name_repair = "minimal")
 
-  anos <- as.numeric(df[4, 2:23])
+  anos <- as.numeric(df[4, 2:(N_ANOS + 1L)])
 
-  df[6:37, 1:23] |>
+  df[6:37, 1:(N_ANOS + 1L)] |>
     set_names(c("geo", paste0("Y", anos))) |>
     mutate(across(everything(), as.character)) |>
     filter(!is.na(geo)) |>
@@ -224,9 +226,9 @@ especiais <- bind_rows(
 message("Lendo Conta da Produção (33 tabelas × 13 atividades × 3 blocos)...")
 
 blocos <- list(
-  list(linhas = 7:28,  nome = "vbp"),
-  list(linhas = 35:56, nome = "ci"),
-  list(linhas = 63:84, nome = "vab")
+  list(linhas = 7L :(6L  + N_ANOS), nome = "vbp"),
+  list(linhas = 35L:(34L + N_ANOS), nome = "ci"),
+  list(linhas = 63L:(62L + N_ANOS), nome = "vab")
 )
 
 conta_producao <- map_dfr(1:33, function(tab_n) {
@@ -269,7 +271,7 @@ n_esp <- nrow(especiais)
 n_cp  <- nrow(conta_producao)
 message("\nLinhas em especiais: ", n_esp)
 message("Linhas em conta_producao: ", n_cp,
-        " (esperado: 33 × 13 × 3 × 22 = ", 33 * 13 * 3 * 22, ")")
+        " (esperado: 33 × 13 × 3 × ", N_ANOS, " = ", 33 * 13 * 3 * N_ANOS, ")")
 
 # Cobertura temporal
 message("\nAnos em especiais: ", paste(range(especiais$ano, na.rm = TRUE), collapse = "–"))
@@ -287,11 +289,11 @@ message("\nAnos 2002 — NAs esperados nas cols 2–5 (val_ano_ant, idx_volume, 
 print(nas_2002)
 message("  (10 NAs em val_corrente = Acre, atividades específicas sem dado em 2002 — limitação do IBGE)")
 
-# Comparação PIB nominal: tab01 vs SIDRA
-pib_tab01 <- pib_nominal |> filter(geo == "Brasil", ano == 2023) |> pull(valor)
+# Comparação PIB nominal: tab01 vs SIDRA (ano mais recente disponível)
+pib_tab01 <- pib_nominal |> filter(geo == "Brasil", ano == ANO_HIST_FIM) |> pull(valor)
 pib_sidra <- ler_especial_simples(SIDRA, "pib_nominal_sidra", sheet = 1, xlsx = TRUE) |>
-  filter(geo == "Brasil", ano == 2023) |> pull(valor)
-message("\nPIB Brasil 2023 — tab01: ", round(pib_tab01),
+  filter(geo == "Brasil", ano == ANO_HIST_FIM) |> pull(valor)
+message("\nPIB Brasil ", ANO_HIST_FIM, " — tab01: ", round(pib_tab01),
         " | SIDRA: ", round(pib_sidra),
         " | Razão: ", round(pib_tab01 / pib_sidra, 4),
         " (esperado ≈ 1 se mesma unidade)")

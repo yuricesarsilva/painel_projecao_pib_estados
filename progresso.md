@@ -787,3 +787,45 @@ O diretório `_extensions/` gerado deve ser commitado junto com o painel.
 **Arquivos modificados:** `R/06_exportar_painel.R`, `painel/painel.qmd`, `.github/workflows/publish-painel.yml`
 
 **Arquivos criados:** `.github/workflows/rebuild-analytics.yml`, `docs/arquitetura.md`, `docs/qa.md`, `docs/modelagem.md`
+
+---
+
+## Etapa 21 — Bloco 6 da reforma: automação de download e parametrização temporal
+
+**O que foi feito:**
+
+**`R/config.R`:**
+- Adicionados 5 parâmetros de download: `IBGE_FTP_BASE`, `SIDRA_TABELA_ID`, `DOWNLOAD_DIR`, `STATUS_JSON_PATH`, `TOL_VALIDACAO_DOWNLOAD` (0,1%).
+
+**`R/00_download_ibge.R`** (criado):
+- Passo 1: monta URLs do FTP IBGE a partir de `ANO_BASE` e `ANO_HIST_FIM` — URL derivada automaticamente, nenhuma edição manual necessária quando o IBGE publicar novo ano.
+- Passo 2: download dos ZIPs com `httr2` — trata HTTP 404 (E01) e timeout (E02).
+- Passo 3: extração para pasta temporária `base_bruta/_novo/` — só promove após validação.
+- Passo 4: download da tabela 5938 do SIDRA via `sidrar::get_sidra()` — PIB + impostos + VAB por UF; salva como XLSX via `openxlsx`.
+- Passo 5: validação cruzada com `dados/especiais.rds` (se existir) — compara PIB Brasil nos anos comuns exceto o mais recente; para com E03 se desvio > 0,1%.
+- Passo 6: promoção das pastas `_novo/` → `base_bruta/` e gravação de `painel/data/status_dados.json`.
+- Códigos de erro estruturados E01–E05 gravados no JSON antes de `stop()`.
+- Pacotes necessários: `httr2`, `sidrar`, `jsonlite`, `openxlsx` (instalar com `renv::install()` e `renv::snapshot()`).
+
+**`R/01_leitura_dados.R`:**
+- Adicionado `source("R/config.R", local = FALSE)` no topo.
+- Adicionada variável `N_ANOS <- ANO_HIST_FIM - ANO_HIST_INI + 1L`.
+- Caminhos `ESPECIAIS` e `CONTA_PROD` agora derivados de `ANO_HIST_INI`/`ANO_HIST_FIM`.
+- Ranges de colunas em `ler_especial_simples` e `ler_especial_atividade` substituídos por `2:(N_ANOS + 1L)` e `1:(N_ANOS + 1L)`.
+- Ranges de linhas dos blocos VBP/CI/VAB em `ler_conta_bloco` substituídos por fórmulas com `N_ANOS`.
+- Contagem esperada na verificação final substituída por `33 * 13 * 3 * N_ANOS`.
+- Comparação PIB final usa `ANO_HIST_FIM` em vez de `2023` hardcoded.
+
+**`R/run_all.R`:**
+- Adicionada etapa 0 opcional — ativa com `DOWNLOAD_ANTES_DE_RODAR <- TRUE` antes de `source("R/run_all.R")`.
+
+**`painel/painel.qmd`:**
+- 5º fetch no `Promise.all` para `status_dados.json` (retorna `null` sem erro se arquivo não existir).
+- `output$status_dados_txt`: exibe "Dados: 2002–2023 · atualizado em YYYY-MM-DD" ou aviso vermelho com código de erro.
+- Footer atualizado para incluir `uiOutput("status_dados_txt")` acima da linha de fonte.
+
+**Arquivos modificados:** `R/config.R`, `R/01_leitura_dados.R`, `R/run_all.R`, `painel/painel.qmd`, `checklist_reforma.md`
+
+**Arquivos criados:** `R/00_download_ibge.R`
+
+**Pendente:** instalar `httr2`, `sidrar`, `openxlsx` no ambiente renv e rodar `renv::snapshot()` — feito manualmente pelo usuário na sessão R antes da primeira execução do script de download.

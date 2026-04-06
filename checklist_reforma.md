@@ -113,6 +113,31 @@
 
 ---
 
+## Bloco 6 - Automação de download e parametrização temporal
+
+### Download automático
+
+- [x] Criar `R/00_download_ibge.R` com download do FTP e SIDRA
+- [x] Implementar tratamento de erros com códigos estruturados (E01–E05)
+- [x] Implementar validação cruzada dos dados baixados
+- [x] Gravar status em `painel/data/status_dados.json`
+- [x] Expor status no footer do painel
+
+### Parametrização temporal
+
+- [x] Derivar caminhos de `base_bruta/` a partir de `ANO_HIST_INI`/`ANO_HIST_FIM`
+- [x] Derivar ranges de colunas dos Especiais a partir de `N_ANOS`
+- [x] Derivar ranges de linhas da Conta da Produção a partir de `N_ANOS`
+- [x] Integrar `config.R` em `01_leitura_dados.R`
+
+### Integração no pipeline
+
+- [x] Adicionar etapa 0 opcional em `run_all.R`
+- [x] Documentar pacotes necessários (httr2, sidrar, jsonlite, openxlsx)
+- [ ] Instalar pacotes novos e atualizar `renv.lock`
+
+---
+
 ## Fase futura - Fora do escopo atual
 
 - [ ] Criar camada `xreg`
@@ -129,3 +154,4 @@
 - [x] Bloco 3 concluído
 - [x] Bloco 4 concluído
 - [x] Bloco 5 concluído
+- [ ] Bloco 6 concluído (pendente: instalar httr2/sidrar/openxlsx e atualizar renv.lock)

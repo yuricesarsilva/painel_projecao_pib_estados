@@ -205,12 +205,14 @@ ui <- page_sidebar(
         fetch(base + "/serie_principal.csv").then(function(r) { return r.text(); }),
         fetch(base + "/vab_macrossetor.csv").then(function(r) { return r.text(); }),
         fetch(base + "/vab_atividade.csv").then(function(r) { return r.text(); }),
-        fetch(base + "/diagnostico.csv").then(function(r) { return r.text(); })
+        fetch(base + "/diagnostico.csv").then(function(r) { return r.text(); }),
+        fetch(base + "/status_dados.json").then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; })
       ]).then(function(results) {
         Shiny.setInputValue("serie_raw",        results[0], {priority: "event"});
         Shiny.setInputValue("vab_mac_raw",      results[1], {priority: "event"});
         Shiny.setInputValue("vab_ativ_raw",     results[2], {priority: "event"});
         Shiny.setInputValue("diagnostico_raw",  results[3], {priority: "event"});
+        Shiny.setInputValue("status_dados_raw", results[4], {priority: "event"});
       }).catch(function(e) {
         var msg = (e && e.message) ? e.message : String(e);
         Shiny.setInputValue("data_load_error", msg, {priority: "event"});
@@ -322,8 +324,12 @@ ui <- page_sidebar(
       "padding:8px 20px; display:flex; justify-content:space-between;",
       "align-items:center; font-size:0.76em; color:#111; line-height:1.3;"
     ),
-    tags$span(
-      "Fonte: IBGE Contas Regionais (2002–2023). Projeções próprias com reconciliação top-down (2024–2026)."
+    tags$div(
+      style = "display:flex; flex-direction:column; gap:2px;",
+      uiOutput("status_dados_txt"),
+      tags$span(
+        "Fonte: IBGE Contas Regionais (2002\u20132023). Projeções próprias com reconciliação top-down (2024\u20132026)."
+      )
     ),
     tags$span(
       style = "text-align:right;",
@@ -664,6 +670,30 @@ server <- function(input, output, session) {
       rownames = FALSE)
   })
 }
+
+  # ---- Status de dados (footer) -----------------------------------------------
+  output$status_dados_txt <- renderUI({
+    s <- input$status_dados_raw
+    if (is.null(s) || identical(s, "")) {
+      return(tags$span(
+        paste0("Dados: ", ANO_HIST_INI, "\u2013", ANO_HIST_FIM),
+        style = "color:#999; font-size:0.9em;"
+      ))
+    }
+    codigo <- s$codigo_erro
+    if (!is.null(codigo) && !is.na(codigo) && nchar(codigo) > 0) {
+      tags$span(
+        paste0("Aviso: dados desatualizados (", codigo, ")"),
+        style = "color:#c0392b; font-weight:600; font-size:0.9em;"
+      )
+    } else {
+      tags$span(
+        paste0("Dados: ", s$ano_ini, "\u2013", s$ano_fim,
+               " \u00b7 atualizado em ", s$data_download),
+        style = "color:#999; font-size:0.9em;"
+      )
+    }
+  })
 
   # ---- Aba Diagnóstico ---------------------------------------------------------
   output$tabela_diagnostico <- renderDT({
