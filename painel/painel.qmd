@@ -675,7 +675,6 @@ server <- function(input, output, session) {
                      columnDefs = list(list(className = "dt-right", targets = "_all"))),
       rownames = FALSE)
   })
-}
 
   # ---- Status de dados (footer) -----------------------------------------------
   output$status_dados_txt <- renderUI({
