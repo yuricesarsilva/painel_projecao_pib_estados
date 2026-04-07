@@ -386,7 +386,28 @@ ui <- page_sidebar(
     ),
     nav_panel("Diagnóstico",
       card(full_screen = TRUE,
-        card_header("Seleção de modelos e métricas CV — território selecionado na sidebar"),
+        card_header("Diagnóstico — seleção de modelos e métricas de validação cruzada (1.089 séries)"),
+        tags$div(
+          style = "display:flex; gap:12px; flex-wrap:wrap; padding:8px 4px 2px; align-items:flex-end;",
+          tags$div(style = "min-width:200px; flex:2;",
+            selectInput("diag_geo", "Território:",
+              choices = c("Todos" = "todos", GEO_ORDER),
+              selected = "todos", width = "100%")),
+          tags$div(style = "min-width:140px; flex:1;",
+            selectInput("diag_tipo", "Tipo de série:",
+              choices = c("Todos" = "todos",
+                          "Macrossetor" = "Macrossetor",
+                          "Atividade"   = "Atividade",
+                          "Impostos"    = "Impostos"),
+              selected = "todos", width = "100%")),
+          tags$div(style = "min-width:130px; flex:1;",
+            selectInput("diag_modelo", "Modelo:",
+              choices = c("Todos" = "todos",
+                          "RW", "ARMA", "ARIMA", "ETS", "ETS-A", "THETA", "SSM"),
+              selected = "todos", width = "100%")),
+          tags$div(style = "padding-bottom:6px;",
+            checkboxInput("diag_fallback", "Somente fallback", value = FALSE))
+        ),
         DTOutput("tabela_diagnostico"))
     )
   )
@@ -431,8 +452,7 @@ server <- function(input, output, session) {
   })
   diagnostico_df <- reactive({
     req(input$diagnostico_raw)
-    read.csv(textConnection(input$diagnostico_raw), na.strings = "") |>
-      filter(geo == input$geo)
+    read.csv(textConnection(input$diagnostico_raw), na.strings = "")
   })
 
   ano_max <- reactive({
@@ -714,27 +734,60 @@ server <- function(input, output, session) {
 
   # ---- Aba Diagnóstico ---------------------------------------------------------
   output$tabela_diagnostico <- renderDT({
-    d <- diagnostico_df() |>
-      mutate(across(c(mase_ponderado, mase_h1, mase_h2, mase_h3),
-                    ~ round(.x, 3))) |>
+    VARIAVEL_DIAG_LABEL <- c(
+      idx_volume   = "Volume",
+      idx_preco    = "Preço",
+      log_impostos = "Impostos"
+    )
+
+    d <- diagnostico_df()
+
+    # Filtros próprios da aba
+    if (!is.null(input$diag_geo)     && input$diag_geo     != "todos")
+      d <- d |> filter(geo        == input$diag_geo)
+    if (!is.null(input$diag_tipo)    && input$diag_tipo    != "todos")
+      d <- d |> filter(serie_tipo == input$diag_tipo)
+    if (!is.null(input$diag_modelo)  && input$diag_modelo  != "todos")
+      d <- d |> filter(modelo     == input$diag_modelo)
+    if (isTRUE(input$diag_fallback))
+      d <- d |> filter(fallback   == TRUE)
+
+    d <- d |>
+      mutate(
+        across(c(mase_ponderado, mase_h1, mase_h2, mase_h3), ~ round(.x, 3)),
+        variavel    = coalesce(VARIAVEL_DIAG_LABEL[variavel], variavel),
+        macrossetor = coalesce(MACRO_LABEL[macrossetor], macrossetor),
+        atividade   = coalesce(ATIVIDADE_LABEL[atividade], atividade),
+        fallback    = if_else(fallback, "Sim", "\u2014")
+      ) |>
       select(
-        Tipo        = serie_tipo,
-        Macrossetor = macrossetor,
-        Atividade   = atividade,
-        `Variável`  = variavel,
-        Modelo      = modelo,
-        `Especificação` = parametros,
-        `MASE pond.`    = mase_ponderado,
-        `MASE h=1`      = mase_h1,
-        `MASE h=2`      = mase_h2,
-        `MASE h=3`      = mase_h3,
-        Fallback        = fallback
+        `Território`  = geo,
+        `Tipo`        = serie_tipo,
+        `Macrossetor` = macrossetor,
+        `Atividade`   = atividade,
+        `Variável`    = variavel,
+        `Modelo`      = modelo,
+        `MASE pond.`  = mase_ponderado,
+        `MASE h=1`    = mase_h1,
+        `MASE h=2`    = mase_h2,
+        `MASE h=3`    = mase_h3,
+        `Fallback`    = fallback
       )
+
     datatable(d,
-      filter   = "top",
       rownames = FALSE,
-      options  = list(pageLength = 15, scrollX = TRUE,
-                      dom = "lfrtip"))
+      options  = list(
+        paging   = FALSE,
+        scrollY  = "500px",
+        scrollX  = TRUE,
+        dom      = "frti",
+        language = list(
+          search       = "Buscar:",
+          info         = "Mostrando _TOTAL_ s\u00e9ries",
+          infoFiltered = "(filtrado de _MAX_ s\u00e9ries)"
+        )
+      )
+    )
   })
 }
 
