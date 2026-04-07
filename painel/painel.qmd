@@ -38,6 +38,7 @@ library(scales)
 # Constantes
 # ==============================================================================
 
+ANO_HIST_INI <- 2002L
 ANO_HIST_FIM <- 2023L
 H_PAINEL <- 3L
 ANO_PROJ_FIM <- 2026L
