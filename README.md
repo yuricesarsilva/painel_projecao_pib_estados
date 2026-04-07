@@ -1,4 +1,4 @@
-# Painel de Projeção do PIB dos Estados Brasileiros (2024–2031)
+# Painel de Projeção do PIB dos Estados Brasileiros
 
 Projeções do PIB nominal, VAB por macrossetor e atividade, impostos, deflator e crescimento real para **27 UFs + 5 regiões + Brasil**, com restrições de agregação contábil (benchmarking top-down).
 
@@ -18,10 +18,8 @@ Projeções do PIB nominal, VAB por macrossetor e atividade, impostos, deflator 
 Esta versão do projeto adota uma separação explícita entre:
 
 - **painel público (`h=3`)**: o produto visual e os CSVs consumidos pelo painel passam a exibir apenas `2024–2026`;
-- **saída técnica (`h=8`)**: o horizonte completo `2024–2031` continua sendo gerado e fica disponível em `output/tabelas/projecoes_painel_h8.xlsx`.
+- **saída técnica (`h=8`)**: o horizonte completo `2024–2031` continua sendo gerado e fica disponível em `output/tabelas/projecoes_painel_h8.xlsx` (disponível apenas internamente para a SEPLAN/RR).
 - **cópia técnica (`h=3`)**: uma cópia estrutural idêntica da planilha técnica também é gerada em `output/tabelas/projecoes_painel_h3.xlsx`, mas restrita ao horizonte público `2024–2026`.
-
-Sempre que houver referência antiga a `2024–2031` como horizonte do painel, considere que ela foi substituída por esta regra mais recente: **o painel mostra só três anos projetados; o horizonte longo fica fora do painel**.
 
 O painel permite visualizar:
 - Séries históricas (2002–2023) e projeções públicas (2024–2026) com intervalo de confiança de 95%
@@ -73,7 +71,7 @@ O painel permite visualizar:
 - **Fonte:** IBGE — Contas Regionais do Brasil
 - **Período histórico:** 2002–2023 (22 observações anuais)
 - **Horizonte público do painel:** 2024–2026
-- **Horizonte técnico complementar:** 2024–2031, mantido apenas nas planilhas auxiliares
+- **Horizonte técnico complementar:** 2024–2031, mantido apenas nas planilhas auxiliares (disponível apenas internamente para a SEPLAN/RR)
 - **Cobertura:** 27 UFs, 5 regiões geográficas e Brasil (33 territórios)
 - **Variáveis modeladas:** índices de volume e preço por atividade/macrossetor, log dos impostos
 
@@ -96,8 +94,7 @@ A seleção usa o menor **MASE ponderado** (*Mean Absolute Scaled Error* agregad
 ### Interpretação do Horizonte
 
 - `2024–2026`: horizonte público do painel.
-- `2024–2031`: horizonte técnico completo, mantido apenas nas planilhas auxiliares.
-- O painel não usa mais a distinção operacional/exploratória na interface pública.
+- `2024–2031`: horizonte técnico completo, mantido apenas nas planilhas auxiliares (disponível apenas internamente para a SEPLAN/RR).
 
 ### Séries Projetadas
 
