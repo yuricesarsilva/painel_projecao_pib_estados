@@ -42,6 +42,7 @@ ANO_HIST_INI <- 2002L
 ANO_HIST_FIM <- 2023L
 H_PAINEL <- 3L
 ANO_PROJ_FIM <- 2026L
+SENHA_PAINEL <- "seplan2025"
 
 GEO_ORDER <- c(
   "Brasil",
@@ -418,6 +419,57 @@ ui <- page_sidebar(
 # ==============================================================================
 
 server <- function(input, output, session) {
+
+  # ---- Autenticação -----------------------------------------------------------
+  autenticado <- reactiveVal(FALSE)
+
+  modal_login <- function(erro = FALSE) {
+    modalDialog(
+      title = tags$div(
+        style = "text-align:center; font-size:1.1em; font-weight:600;",
+        "Projeções do PIB Estadual — SEPLAN-RR"
+      ),
+      tags$div(
+        style = "text-align:center; padding:4px 0 12px;",
+        tags$p(
+          style = "color:#666; font-size:0.9em; margin-bottom:20px;",
+          "Painel em análise. Acesso restrito."
+        ),
+        passwordInput("senha_input", label = NULL,
+                      placeholder = "Senha", width = "100%"),
+        if (erro) tags$p(
+          style = "color:#c0392b; font-size:0.85em; margin-top:6px;",
+          "Senha incorreta. Tente novamente."
+        )
+      ),
+      footer = tags$div(
+        style = "text-align:center;",
+        actionButton("btn_entrar", "Entrar",
+                     class = "btn-primary",
+                     style = "min-width:120px;")
+      ),
+      tags$script(HTML(
+        "$(document).off('keydown.login').on('keydown.login', function(e){",
+        "  if(e.key==='Enter'&&$('#senha_input').is(':visible')){$('#btn_entrar').click();}",
+        "});"
+      )),
+      easyClose = FALSE,
+      size = "s"
+    )
+  }
+
+  observe({
+    if (!autenticado()) showModal(modal_login())
+  })
+
+  observeEvent(input$btn_entrar, {
+    if (identical(input$senha_input, SENHA_PAINEL)) {
+      autenticado(TRUE)
+      removeModal()
+    } else {
+      showModal(modal_login(erro = TRUE))
+    }
+  }, ignoreInit = TRUE)
 
   observeEvent(input$data_load_error, {
     showNotification(
