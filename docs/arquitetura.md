@@ -59,7 +59,8 @@ dados/
            painel/data/serie_principal.csv   ← histórico + proj 2024–2026
            painel/data/vab_macrossetor.csv   ← VAB macro histórico + proj
            painel/data/vab_atividade.csv     ← VAB atividade histórico + proj
-           painel/data/diagnostico.csv       ← modelos, métricas, fallback
+           painel/data/diagnostico.csv       ← modelos, métricas, fallback (aba Diagnóstico)
+           painel/data/tabela_painel.xlsx    ← tabela completa para download (3 abas, colunas em PT)
 ```
 
 ---

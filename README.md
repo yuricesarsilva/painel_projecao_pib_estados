@@ -32,6 +32,8 @@ O painel permite visualizar:
 - VAB desagregado por atividade econômica (12 atividades)
 - Comparativo entre territórios
 - Tabela interativa com todas as variáveis e fontes de dados (série principal, macrossetor, atividade)
+- **Aba Diagnóstico** com as 1.089 séries modeladas, filtros por território, tipo, modelo e fallback, e métricas de validação cruzada (MASE ponderado e por horizonte)
+- **Download da Tabela das Projeções** em XLSX diretamente pela sidebar (3 abas: série principal, macrossetor, atividade)
 - Filtro de anos de projeção exibidos (padrão: 3 anos, mínimo: 1 ano, máximo: 3 anos)
 - Números formatados no padrão brasileiro (vírgula decimal, ponto milhar)
 - Alternância modo claro/escuro via botão na barra superior
@@ -223,6 +225,8 @@ Esse helper reaproveita o bloco `shinylive-r` de `painel/painel.qmd`, mas serve 
 | `painel/data/serie_principal.csv` | Séries históricas + projeções públicas até 2026, 5 variáveis, IC 95% |
 | `painel/data/vab_macrossetor.csv` | VAB histórico + projeções públicas até 2026 por macrossetor, IC 95% |
 | `painel/data/vab_atividade.csv` | VAB histórico + projeções públicas até 2026 por atividade, IC 95% |
+| `painel/data/diagnostico.csv` | 1.089 séries modeladas: modelo vencedor, MASE por horizonte, status de fallback |
+| `painel/data/tabela_painel.xlsx` | Tabela completa para download (3 abas: série principal, macrossetor, atividade) — disponível via link na sidebar do painel |
 | `painel/metodologia.html` | Nota metodológica publicada no GitHub Pages |
 
 ---

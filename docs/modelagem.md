@@ -253,5 +253,19 @@ contém uma linha por série modelada, com as seguintes colunas:
 - `fallback = TRUE` não indica necessariamente má qualidade — o ARIMA de
   fallback pode ter performance similar ao modelo original. Verificar `modelo`
   e `mase_ponderado` para avaliar.
-- A aba "Diagnóstico" no painel filtra automaticamente pelo território
-  selecionado na sidebar.
+
+**Aba Diagnóstico no painel:**
+
+A aba exibe todas as 1.089 séries modeladas com filtros próprios (independentes
+da seleção da sidebar):
+
+| Filtro | Opções |
+|--------|--------|
+| Território | Todos os 33 territórios + "Todos" |
+| Tipo de série | Macrossetor / Atividade / Impostos / Todos |
+| Modelo | RW, ARMA, ARIMA, ETS, ETS-A, THETA, SSM / Todos |
+| Somente fallback | Checkbox para isolar séries que usaram ARIMA de fallback |
+
+A tabela usa scroll contínuo (sem paginação) e busca global. As colunas
+`variavel`, `macrossetor` e `atividade` são exibidas com rótulos legíveis
+(Volume / Preço / Impostos). O campo `fallback` aparece como "Sim" / "—".
