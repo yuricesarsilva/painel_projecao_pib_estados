@@ -37,7 +37,7 @@ jobs:
         uses: r-lib/actions/setup-renv@v2
 
       - name: Instalar shinylive (necessário para renderização Quarto)
-        run: Rscript -e "if (!requireNamespace('shinylive', quietly=TRUE)) install.packages('shinylive', repos='https://cloud.r-project.org')"
+        run: Rscript -e "install.packages('shinylive')"
 
       # Quarto CLI
       - name: Instalar Quarto
